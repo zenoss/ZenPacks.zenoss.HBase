@@ -32,11 +32,13 @@ class HBaseRegion(HBaseComponent):
     )
 
     _relations = HBaseComponent._relations + (
-        ('table', ToOne(ToManyCont, MODULE_NAME['HBaseRegion'], 'regions')),
+        # ('table', ToOne(ToManyCont, MODULE_NAME['HBaseRegion'], 'regions')),
+        ('server', ToOne(ToManyCont, MODULE_NAME['HBaseRegion'], 'regions')),
     )
 
     def device(self):
-        return self.table().device()
+        # return self.table().device()
+        return self.server().device()
 
 
 class IHBaseRegionInfo(IComponentInfo):

@@ -104,7 +104,7 @@ class ZenPack(ZenPackBase):
     packZProperties = [
         ('zHBaseUsername', '', 'string'),
         ('zHBasePasword', '', 'password'),
-        ('zHBasePort', '', 'string'),
+        ('zHBasePort', '8080', 'string'),
     ]
 
     def install(self, app):

@@ -28,15 +28,19 @@ from .utils import updateToMany, updateToOne
 class HBaseRegionServer(HBaseComponent):
     meta_type = portal_type = 'HBaseRegionServer'
 
-    start_time = None
+    start_code = None
+    is_alive = None
 
     _properties = HBaseComponent._properties + (
-        {'id': 'start_time', 'type': 'string'},
+        {'id': 'start_code', 'type': 'string'},
+        {'id': 'is_alive', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
         ('hbase_host', ToOne(
             ToManyCont, 'Products.ZenModel.Device.Device', 'hbase_servers')),
+        ('regions', ToManyCont(
+            ToOne, MODULE_NAME['HBaseRegion'], 'server')),
     )
 
     def device(self):
@@ -48,7 +52,8 @@ class IHBaseRegionServerInfo(IComponentInfo):
     API Info interface for HBaseRegionServer.
     '''
 
-    start_time = schema.TextLine(title=_t(u'Start time'))
+    start_code = schema.TextLine(title=_t(u'Start code'))
+    is_alive = schema.TextLine(title=_t(u'Alive'))
 
 
 class HBaseRegionServerInfo(ComponentInfo):
@@ -57,4 +62,5 @@ class HBaseRegionServerInfo(ComponentInfo):
     implements(IHBaseRegionServerInfo)
     adapts(HBaseRegionServer)
 
-    start_time = ProxyProperty('start_time')
+    start_code = ProxyProperty('start_code')
+    is_alive = ProxyProperty('is_alive')
