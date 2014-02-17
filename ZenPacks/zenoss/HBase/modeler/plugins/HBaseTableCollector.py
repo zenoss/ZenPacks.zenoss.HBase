@@ -22,7 +22,7 @@ from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 
 
-class HBaseCollector(PythonPlugin):
+class HBaseTableCollector(PythonPlugin):
     '''
     PythonCollector plugin for modelling device components
     '''
@@ -50,7 +50,7 @@ class HBaseCollector(PythonPlugin):
             url += user
         if passwd:
             url += ":" + passwd + "@"
-        url += host + ':' + port + '/status/cluster'
+        url += host + ':' + port + '/'
 
         res = getPage(url, headers={'Accept': 'application/json'})
         res.addCallbacks(
@@ -80,39 +80,20 @@ class HBaseCollector(PythonPlugin):
         )
 
         maps = collections.OrderedDict([
-            ('hbase_servers', []),
-            ('hbase_tables', []),
-            ('regions', []),
-            ('device', []),
+            ('hbase_tables', [])
         ])
 
         data = json.loads(results)
 
-        # List of servers
-        server_oms = []
-        for node in data["LiveNodes"]:
-            node_id = prepId(node['name'])
-            server_oms.append(self._node_om(node, True))
+        # List of tables
+        tables_oms = []
+        for table in data["table"]:
+            tables_oms.append(self._table_om(table))
 
-            # List of regions
-            region_oms = []
-            for region in node["Region"]:
-                region_oms.append(self._region_om(region, node_id))
-
-            maps['regions'].append(RelationshipMap(
-                compname='hbase_servers/%s' % node_id,
-                relname='regions',
-                modname=MODULE_NAME['HBaseRegion'],
-                objmaps=region_oms))
-
-        for node in data["DeadNodes"]:
-            server_oms.append(self._node_om(node))
-
-        maps['hbase_servers'].append(RelationshipMap(
-            relname='hbase_servers',
-            modname=MODULE_NAME['HBaseRegionServer'],
-            objmaps=server_oms))
-
+        maps['hbase_tables'].append(RelationshipMap(
+            relname='hbase_tables',
+            modname=MODULE_NAME['HBaseTable'],
+            objmaps=tables_oms))
         log.info(
             'Modeler %s finished processing data for device %s',
             self.name(), device.id
@@ -120,29 +101,14 @@ class HBaseCollector(PythonPlugin):
 
         return list(chain.from_iterable(maps.itervalues()))
 
-    def _node_om(self, node, is_alive = False):
+    def _table_om(self, table):
         """Builds HBase Region Server object map"""
 
-        if is_alive:
-            return ObjectMap({
-                'id': prepId(node['name']),
-                'title': node['name'],
-                'start_code': node['startCode'],
-                'is_alive': "yes"
-            })
-        else:
-            return ObjectMap({
-                'id': prepId(node),
-                'title': node,
-                'start_code': node,
-                'is_alive': "no"
-            })
-
-    def _region_om(self, region, node_id):
-        """Builds HBase Region object map"""
         return ObjectMap({
-            'id': node_id + NAME_SPLITTER + prepId(region['name']),
-            'title': region['name']
+            'id': prepId(table['name']),
+            'title': table['name'],
+            'compaction': table['name'],
+            'enabled': "yes"
         })
 
     def _send_event(self, reason, id, severity, force=False):
