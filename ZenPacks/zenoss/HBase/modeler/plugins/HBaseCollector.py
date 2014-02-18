@@ -125,14 +125,14 @@ class HBaseCollector(PythonPlugin):
                 'id': prepId(node['name']),
                 'title': node['name'],
                 'start_code': node['startCode'],
-                'is_alive': "yes"
+                'is_alive': "Up"
             })
         else:
             return ObjectMap({
                 'id': prepId(node),
                 'title': node,
                 'start_code': node,
-                'is_alive': "no"
+                'is_alive': "Down"
             })
 
     def _region_om(self, region, node_id):
