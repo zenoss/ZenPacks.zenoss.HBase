@@ -32,8 +32,8 @@ class HBaseTable(HBaseComponent):
     compaction = None
 
     _properties = HBaseComponent._properties + (
-        {'id': 'enabled', 'type': 'string'},
-        {'id': 'compaction', 'type': 'string'},
+        # {'id': 'enabled', 'type': 'string'},
+        # {'id': 'compaction', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
@@ -52,8 +52,8 @@ class IHBaseTableInfo(IComponentInfo):
     API Info interface for HBaseTable.
     '''
 
-    enabled = schema.TextLine(title=_t(u'Enabled'))
-    compaction = schema.TextLine(title=_t(u'Compaction'))
+    # enabled = schema.TextLine(title=_t(u'Enabled'))
+    # compaction = schema.TextLine(title=_t(u'Compaction'))
 
 
 class HBaseTableInfo(ComponentInfo):
@@ -62,5 +62,5 @@ class HBaseTableInfo(ComponentInfo):
     implements(IHBaseTableInfo)
     adapts(HBaseTable)
 
-    enabled = ProxyProperty('enabled')
-    enabled = ProxyProperty('compaction')
+    # enabled = ProxyProperty('enabled')
+    # enabled = ProxyProperty('compaction')

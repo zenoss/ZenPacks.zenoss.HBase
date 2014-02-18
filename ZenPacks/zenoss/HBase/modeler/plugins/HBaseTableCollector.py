@@ -107,8 +107,8 @@ class HBaseTableCollector(PythonPlugin):
         return ObjectMap({
             'id': prepId(table['name']),
             'title': table['name'],
-            'compaction': table['name'],
-            'enabled': "yes"
+            # 'compaction': table['name'],
+            # 'enabled': "yes"
         })
 
     def _send_event(self, reason, id, severity, force=False):
