@@ -20,6 +20,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url
 
 
 class HBaseCollector(PythonPlugin):
@@ -40,17 +41,13 @@ class HBaseCollector(PythonPlugin):
     def collect(self, device, log):
         log.info("Collecting data for device %s", device.id)
 
-        user = device.zHBaseUsername
-        port = device.zHBasePort
-        host = device.manageIp
-        passwd = device.zHBasePasword
-
-        url = 'http://'
-        if user:
-            url += user
-        if passwd:
-            url += ":" + passwd + "@"
-        url += host + ':' + port + '/status/cluster'
+        url = hbase_rest_url(
+            user=device.zHBaseUsername,
+            passwd=device.zHBasePasword,
+            port=device.zHBasePort,
+            host=device.manageIp,
+            endpoint='/status/cluster'
+        )
 
         res = getPage(url, headers={'Accept': 'application/json'})
         res.addCallbacks(

@@ -114,3 +114,16 @@ def updateToOne(relationship, root, type_, id_):
         new_obj.index_object()
 
     return
+
+
+def hbase_rest_url(user, passwd, port, host, endpoint):
+    """
+    Constructs URL to access HBase REST interface
+    """
+    url = 'http://'
+    if user:
+        url += user
+    if passwd:
+        url += ":" + passwd + "@"
+    url += host + ':' + port + endpoint
+    return url
