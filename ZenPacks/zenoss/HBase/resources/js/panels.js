@@ -65,7 +65,7 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'is_alive',
                 dataIndex: 'is_alive',
                 header: _t('Alive'),
-              //renderer: Zenoss.render.trueFalse,
+                renderer: Zenoss.render.pingStatus,
                 width: 60
             },{
                 id: 'monitored',
