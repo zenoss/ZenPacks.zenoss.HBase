@@ -51,7 +51,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         """
         Parses resulting data into datapoints
         """
-        data = json.loads(res)
+        data = json.loads(result)
 
         return {
             'live_servers': (len(data['LiveNodes']), 'N'),
