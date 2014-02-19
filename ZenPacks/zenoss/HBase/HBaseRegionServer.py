@@ -46,6 +46,9 @@ class HBaseRegionServer(HBaseComponent):
     def device(self):
         return self.hbase_host()
 
+    # def getStatus(self):
+    #     return "Up" # (self.is_alive == "yes")
+
 
 class IHBaseRegionServerInfo(IComponentInfo):
     '''
@@ -64,3 +67,10 @@ class HBaseRegionServerInfo(ComponentInfo):
 
     start_code = ProxyProperty('start_code')
     is_alive = ProxyProperty('is_alive')
+
+    @property
+    @info
+    def status(self):
+        if (self.is_alive == "yes"):
+            return "Up"
+        return "Down"

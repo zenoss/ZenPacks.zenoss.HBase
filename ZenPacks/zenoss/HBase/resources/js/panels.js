@@ -44,7 +44,7 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'monitored'},
                 {name: 'locking'},
                 {name: 'start_code'},
-                {name: 'is_alive'},
+                {name: 'status'},
             ],
             columns: [{
                 id: 'severity',
@@ -62,9 +62,9 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 header: _t('Start code'),
                 width: 300
             },{
-                id: 'is_alive',
-                dataIndex: 'is_alive',
-                header: _t('Alive'),
+                id: 'status',
+                dataIndex: 'status',
+                header: _t('Status'),
                 renderer: Zenoss.render.pingStatus,
                 width: 60
             },{
