@@ -149,7 +149,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         """
         Parses resulting data into datapoints
         """
-        data = json.loads(res)
+        data = json.loads(result)
 
         for node in data["LiveNodes"]:
             if self.component == prepId(node['name']):
