@@ -86,14 +86,14 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
 
             res = yield getPage(url, headers={'Accept': 'application/json'})
 
-            print "==" * 20
-            print ds.component
-            print res
+            # print "==" * 20
+            # print ds.component
+            # print res
             if not res:
                 raise HBaseException('No monitoring data.')
 
             results['values'][self.component] = self.process(res)
-            print results
+            # print results
 
             try:
                 pass
