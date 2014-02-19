@@ -39,12 +39,12 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'uid'},
                 {name: 'name'},
                 {name: 'severity'},
+                {name: 'status'},
                 {name: 'usesMonitorAttribute'},
                 {name: 'monitor'},
                 {name: 'monitored'},
                 {name: 'locking'},
                 {name: 'start_code'},
-                {name: 'status'},
             ],
             columns: [{
                 id: 'severity',
@@ -98,6 +98,7 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
             fields: [
                 {name: 'uid'},
                 {name: 'name'},
+                {name: 'status'},
                 {name: 'severity'},
                 {name: 'usesMonitorAttribute'},
                 {name: 'monitor'},
@@ -148,12 +149,11 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'uid'},
                 {name: 'name'},
                 {name: 'severity'},
+                {name: 'status'},
                 {name: 'usesMonitorAttribute'},
                 {name: 'monitor'},
                 {name: 'monitored'},
                 {name: 'locking'},
-                {name: 'start_code'},
-                {name: 'is_alive'},
             ],
             columns: [{
                 id: 'severity',
@@ -165,6 +165,12 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'name',
                 dataIndex: 'name',
                 header: _t('Name'),
+            },{
+                id: 'status',
+                dataIndex: 'status',
+                header: _t('Status'),
+                renderer: Zenoss.render.pingStatus,
+                width: 60
             },{
                 id: 'monitored',
                 dataIndex: 'monitored',
@@ -189,9 +195,9 @@ Ext.reg('HBaseRegionPanel', ZC.HBaseRegionPanel);
 /* Subcomponent Panels */
 /* HBaseRegion */
 Zenoss.nav.appendTo('Component', [{
-    id: 'cpus',
+    id: 'regions',
     text: _t('Regions'),
-    xtype: 'HBaseRegion',
+    xtype: 'HBaseRegionPanel',
     subComponentGridPanel: true,
     filterNav: function(navpanel) {
          switch (navpanel.refOwner.componentType) {

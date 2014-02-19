@@ -54,3 +54,8 @@ class HBaseRegionInfo(ComponentInfo):
 
     implements(IHBaseRegionInfo)
     adapts(HBaseRegion)
+
+    @property
+    @info
+    def status(self):
+        return self._object.server().is_alive
