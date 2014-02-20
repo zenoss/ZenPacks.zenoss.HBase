@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (C) Zenoss, Inc. 2013, all rights reserved.
+# Copyright (C) Zenoss, Inc. 2014, all rights reserved.
 #
 # This content is made available according to terms specified in
 # License.zenoss under the directory where your Zenoss product is installed.
@@ -45,9 +45,6 @@ class HBaseRegionServer(HBaseComponent):
 
     def device(self):
         return self.hbase_host()
-
-    # def getStatus(self):
-    #     return "Up" # (self.is_alive == "yes")
 
 
 class IHBaseRegionServerInfo(IComponentInfo):

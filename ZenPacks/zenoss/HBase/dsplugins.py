@@ -74,8 +74,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if ds.zHBase == "false":
                 continue
 
-            # print "==" * 20
-            # print ds.component
+            print "==" * 20
+            print ds.component
             self.component = ds.component
 
             url = hbase_rest_url(
@@ -93,7 +93,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 raise HBaseException('No monitoring data.')
 
             results['values'][self.component] = self.process(res)
-            # print results
+            print results
 
             try:
                 pass
@@ -105,7 +105,6 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'eventClass': '/Status',
                     'severity': 5,
                 })
-        #return results
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -140,6 +139,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         })
         return data
 
+
 class HBaseRegionServerPlugin(HBaseBasePlugin):
     """
     Datasource for HBase Region Server component.
@@ -160,11 +160,72 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                     'regions': (len(node['Region']), 'N'),
                     'read_requests': (0, 'N'),
                     'write_requests': (0, 'N'),
+                    'number_of_stores': (0, 'N'),
+                    'number_of_store_files': (0, 'N'),
+                    'store_file_size_mb': (0, 'N'),
+                    'store_file_index_size_mb': (0, 'N'),
+                    'memstore_size_mb': (0, 'N'),
+                    'current_compacted_kv': (0, 'N'),
+                    'total_compacting_kv': (0, 'N'),
                 }
                 for region in node["Region"]:
-                    res['read_requests'] = (res['read_requests'][0] + \
-                        region['readRequestsCount'], 'N')
-                    res['write_requests'] = (res['write_requests'][0] + \
-                        region['writeRequestsCount'], 'N')
+                    res = _sum_perf_metrics(res, region)
                 return res
         return {}
+
+
+class HBaseRegionPlugin(HBaseBasePlugin):
+    """
+    Datasource for HBase Region component.
+    """
+
+    def process(self, result):
+        """
+        Parses resulting data into datapoints
+        """
+        data = json.loads(result)
+        node_id, region_id = self.component.split(NAME_SPLITTER)
+        res = {}
+
+        for node in data["LiveNodes"]:
+            if node_id == prepId(node['name']):
+                for region in node["Region"]:
+                    if region_id == prepId(region['name']):
+                        res = {
+                            'read_requests': (0, 'N'),
+                            'write_requests': (0, 'N'),
+                            'number_of_stores': (0, 'N'),
+                            'number_of_store_files': (0, 'N'),
+                            'store_file_size_mb': (0, 'N'),
+                            'store_file_index_size_mb': (0, 'N'),
+                            'memstore_size_mb': (0, 'N'),
+                            'current_compacted_kv': (0, 'N'),
+                            'total_compacting_kv': (0, 'N'),
+                        }
+                        return _sum_perf_metrics(res, region)
+        return res
+
+
+def _sum_perf_metrics(res, region):
+    """
+    Util function for summing region metrics
+    """
+    res['read_requests'] = (res['read_requests'][0] + \
+        region['readRequestsCount'], 'N')
+    res['write_requests'] = (res['write_requests'][0] + \
+        region['writeRequestsCount'], 'N')
+    res['number_of_stores'] = (res['number_of_stores'][0] + \
+        region['stores'], 'N')
+    res['number_of_store_files'] = (res['number_of_store_files'][0] + \
+        region['storefiles'], 'N')
+    res['store_file_size_mb'] = (res['store_file_size_mb'][0] + \
+        region['storefileSizeMB'], 'N')
+    res['store_file_index_size_mb'] = (res['store_file_index_size_mb'][0] + \
+        region['storefileIndexSizeMB'], 'N')
+    res['memstore_size_mb'] = (res['memstore_size_mb'][0] + \
+        region['memstoreSizeMB'], 'N')
+    res['current_compacted_kv'] = (res['current_compacted_kv'][0] + \
+        region['currentCompactedKVs'], 'N')
+    res['total_compacting_kv'] = (res['total_compacting_kv'][0] + \
+        region['totalCompactingKVs'], 'N')
+    return res
