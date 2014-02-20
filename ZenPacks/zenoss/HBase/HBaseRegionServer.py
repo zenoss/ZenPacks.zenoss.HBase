@@ -56,7 +56,6 @@ class IHBaseRegionServerInfo(IComponentInfo):
     '''
 
     start_code = schema.TextLine(title=_t(u'Start code'))
-    is_alive = schema.TextLine(title=_t(u'Alive'))
 
 
 class HBaseRegionServerInfo(ComponentInfo):
@@ -71,6 +70,4 @@ class HBaseRegionServerInfo(ComponentInfo):
     @property
     @info
     def status(self):
-        if (self.is_alive == "yes"):
-            return "Up"
-        return "Down"
+        return self.is_alive
