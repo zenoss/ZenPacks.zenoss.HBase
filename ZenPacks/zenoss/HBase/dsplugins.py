@@ -74,6 +74,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if ds.zHBase == "false":
                 continue
 
+            # print "==" * 20
+            # print ds.component
             self.component = ds.component
 
             url = hbase_rest_url(
@@ -85,10 +87,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             )
 
             res = yield getPage(url, headers={'Accept': 'application/json'})
-
-            # print "==" * 20
-            # print ds.component
             # print res
+
             if not res:
                 raise HBaseException('No monitoring data.')
 
@@ -153,10 +153,18 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
 
         for node in data["LiveNodes"]:
             if self.component == prepId(node['name']):
-                return {
+                res = {
                     'requests_per_second': (node['requests'], 'N'),
                     'used_heap_mb': (node['heapSizeMB'], 'N'),
                     'max_heap_mb': (node['maxHeapSizeMB'], 'N'),
                     'regions': (len(node['Region']), 'N'),
+                    'read_requests': (0, 'N'),
+                    'write_requests': (0, 'N'),
                 }
+                for region in node["Region"]:
+                    res['read_requests'] = (res['read_requests'][0] + \
+                        region['readRequestsCount'], 'N')
+                    res['write_requests'] = (res['write_requests'][0] + \
+                        region['writeRequestsCount'], 'N')
+                return res
         return {}
