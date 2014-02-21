@@ -67,6 +67,4 @@ class HBaseRegionServerInfo(ComponentInfo):
     @property
     @info
     def status(self):
-        if (self.is_alive == "yes"):
-            return "Up"
-        return "Down"
+        return self.is_alive

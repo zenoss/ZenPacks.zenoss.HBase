@@ -61,6 +61,18 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             'average_load': (data['averageLoad'], 'N'),
         }
 
+    def add_maps(self, res):
+        '''
+        Create Object/Relationship map for component remodeling.
+
+        @param res: dict with key enum_info and value Item object
+        @type res: dict
+        @param datasource: device datasourse
+        @type datasource: instance of PythonDataSourceConfig
+        @return: ObjectMap|RelationshipMap
+        '''
+        pass
+
     @defer.inlineCallbacks
     def collect(self, config):
         """
@@ -93,6 +105,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 raise HBaseException('No monitoring data.')
 
             results['values'][self.component] = self.process(res)
+            results['maps'][self.component] = self.add_maps(res)
             print results
 
             try:
@@ -172,6 +185,22 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                     res = _sum_perf_metrics(res, region)
                 return res
         return {}
+
+    def add_maps(self, result):
+        """
+        Parses resulting data into datapoints
+        """
+        data = json.loads(result)
+        is_alive = "Down"
+        for node in data["LiveNodes"]:
+            if self.component == prepId(node['name']):
+                is_alive = "Up"
+
+        return ObjectMap({
+            "compname": "hbase_servers/{0}".format(self.component),
+            "modname": "HBase Region Server",
+            "is_alive": is_alive,
+        })
 
 
 class HBaseRegionPlugin(HBaseBasePlugin):
