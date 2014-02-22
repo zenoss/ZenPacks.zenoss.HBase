@@ -64,14 +64,5 @@
         class="Products.ZenUI3.browser.javascript.JavaScriptSrcBundleViewlet"
         permission="zope2.Public"
         />
-    <browser:viewlet
-        name="js-panels"
-        paths="/++resource++ZenPacks_zenoss_HBase/js/panels.js"
-        for="Products.ZenModel.Device.Device"
-        weight="20"
-        manager="Products.ZenUI3.browser.interfaces.IJavaScriptSrcManager"
-        class="Products.ZenUI3.browser.javascript.JavaScriptSrcBundleViewlet"
-        permission="zope2.Public"
-        />
 
 </configure>
