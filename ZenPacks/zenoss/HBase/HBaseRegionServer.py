@@ -12,6 +12,7 @@ from zope.interface import implements
 
 from Products.ZenRelations.RelSchema import ToOne, ToMany, ToManyCont
 
+from Products.Zuul import getFacade
 from Products.Zuul.catalog.paths import DefaultPathReporter, relPath
 from Products.Zuul.decorators import info
 from Products.Zuul.form import schema
@@ -46,13 +47,39 @@ class HBaseRegionServer(HBaseComponent):
     def device(self):
         return self.hbase_host()
 
+    def getClearEvents(self):
+        self.clear_events()
+        return True
+
+    def setClearEvents(self, value):
+        self.clear_events()
+
+    def clear_events(self):
+        zep = getFacade('zep')
+        zep_filter = zep.createEventFilter(
+            element_identifier=(self.hbase_host().id),
+            event_class=('/Status'),
+            severity=(5, 4),
+            status=(0, 1)
+        )
+        results = zep.getEventSummariesGenerator(filter=zep_filter)
+
+        component_list = [
+            x.getObject().id for x in self.hbase_host().componentSearch()
+        ]
+        for res in results:
+            key = res['occurrence'][0]['actor'].get('element_sub_identifier')
+            if key and key not in component_list:
+                del_filter = zep.createEventFilter(uuid=res['uuid'])
+                zep.closeEventSummaries(eventFilter=del_filter)
+
 
 class IHBaseRegionServerInfo(IComponentInfo):
     '''
     API Info interface for HBaseRegionServer.
     '''
 
-    start_code = schema.TextLine(title=_t(u'Start code'))
+    start_code = schema.TextLine(title=_t(u'Start Code'))
 
 
 class HBaseRegionServerInfo(ComponentInfo):
@@ -67,6 +94,4 @@ class HBaseRegionServerInfo(ComponentInfo):
     @property
     @info
     def status(self):
-        if (self.is_alive == "yes"):
-            return "Up"
-        return "Down"
+        return self._object.is_alive

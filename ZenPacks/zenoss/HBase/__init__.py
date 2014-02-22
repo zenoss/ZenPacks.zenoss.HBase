@@ -20,11 +20,17 @@ from Products.ZenEvents.EventManagerBase import EventManagerBase
 from Products.ZenModel.Device import Device
 from Products.ZenModel.ZenPack import ZenPack as ZenPackBase
 from Products.ZenRelations.RelSchema import ToManyCont, ToOne
+from Products.ZenRelations.zPropertyCategory import setzPropertyCategory
 from Products.ZenUtils.Utils import unused
 from Products.Zuul.interfaces import ICatalogTool
 
 unused(Globals)
 
+# Categorize zProperties.
+setzPropertyCategory('zHBase', 'HBase')
+setzPropertyCategory('zHBaseUsername', 'HBase')
+setzPropertyCategory('zHBasePasword', 'HBase')
+setzPropertyCategory('zHBasePort', 'HBase')
 
 # Modules containing model classes. Used by zenchkschema to validate
 # bidirectional integrity of defined relationships.
@@ -135,31 +141,3 @@ class ZenPack(ZenPackBase):
     def _buildDeviceRelations(self):
         for d in self.dmd.Devices.getSubDevicesGen():
             d.buildRelations()
-
-
-def SizeUnitsProxyProperty(propertyName):
-    """This uses a closure to make a getter and
-    setter for the size property and assigns it
-    a calculated value with unit type.
-    """
-    def setter(self, value):
-        return setattr(self._object, propertyName, value)
-
-    def getter(self):
-        val = getattr(self._object, propertyName)
-        try:
-            val = int(val)
-            if val == 0:
-                return val
-            units = ("B", "KB", "MB", "GB", "TB", "PB")
-            i = int(math.floor(math.log(val, 1024)))
-            p = math.pow(1024, i)
-            s = round(val/p, 2)
-            if (s > 0):
-                return '%s %s' % (s, units[i])
-            else:
-                return '0 B'
-        except:
-            return val
-
-    return property(getter, setter)
