@@ -42,6 +42,14 @@
               True
             </property>
           </object>
+          <object class="RRDDataPoint" id="percent_dead_servers" module="Products.ZenModel.RRDDataPoint">
+            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
+              GAUGE
+            </property>
+            <property id="isrow" mode="w" type="boolean">
+              True
+            </property>
+          </object>
           <object class="RRDDataPoint" id="requests_per_second" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -67,6 +75,54 @@
             </property>
           </object>
         </tomanycont>
+      </object>
+    </tomanycont>
+    <tomanycont id="thresholds">
+      <object class="MinMaxThreshold" id="DeadServersPercentageCritical" module="Products.ZenModel.MinMaxThreshold">
+        <property id="eventClass" mode="w" type="string">
+          /Perf
+        </property>
+        <property id="severity" mode="w" type="int">
+          5
+        </property>
+        <property id="dsnames" label="DataPoints" mode="w" type="lines">
+          ['HBaseClusterStatus_percent_dead_servers']
+        </property>
+        <property id="enabled" label="Enabled" mode="w" type="boolean">
+          True
+        </property>
+        <property id="minval" mode="w" type="string">
+          0
+        </property>
+        <property id="maxval" mode="w" type="string">
+          50
+        </property>
+        <property id="escalateCount" mode="w" type="int">
+          0
+        </property>
+      </object>
+      <object class="MinMaxThreshold" id="DeadServersPercentageWarning" module="Products.ZenModel.MinMaxThreshold">
+        <property id="eventClass" mode="w" type="string">
+          /Perf
+        </property>
+        <property id="severity" mode="w" type="int">
+          3
+        </property>
+        <property id="dsnames" label="DataPoints" mode="w" type="lines">
+          ['HBaseClusterStatus_percent_dead_servers']
+        </property>
+        <property id="enabled" label="Enabled" mode="w" type="boolean">
+          True
+        </property>
+        <property id="minval" mode="w" type="string">
+          0
+        </property>
+        <property id="maxval" mode="w" type="string">
+          10
+        </property>
+        <property id="escalateCount" mode="w" type="int">
+          0
+        </property>
       </object>
     </tomanycont>
     <tomanycont id="graphDefs">
@@ -188,8 +244,7 @@
           </object>
         </tomanycont>
       </object>
-
-	  <object class="GraphDefinition" id="Performance" module="Products.ZenModel.GraphDefinition">
+      <object class="GraphDefinition" id="Performance" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
         </property>
@@ -249,7 +304,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Requests" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -365,7 +419,6 @@
               True
             </property>
           </object>
-          
           <object class="RRDDataPoint" id="regions" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -374,7 +427,6 @@
               True
             </property>
           </object>
-          
           <object class="RRDDataPoint" id="read_requests" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -431,7 +483,6 @@
               True
             </property>
           </object>
-
           <object class="RRDDataPoint" id="current_compacted_kv" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -541,8 +592,7 @@
           </object>
         </tomanycont>
       </object>
-
-	  <object class="GraphDefinition" id="Regions" module="Products.ZenModel.GraphDefinition">
+      <object class="GraphDefinition" id="Regions" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
         </property>
@@ -602,7 +652,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Requests" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -666,7 +715,7 @@
     </tomanycont>
   </object>
 
-
+  
   <object class="RRDTemplate" id="/zport/dmd/Devices/rrdTemplates/HBaseRegion" module="Products.ZenModel.RRDTemplate">
     <property id="targetPythonClass" mode="w" type="string">
       ZenPacks.zenoss.HBase.HBaseRegion
@@ -748,7 +797,6 @@
               True
             </property>
           </object>
-
           <object class="RRDDataPoint" id="current_compacted_kv" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -769,5 +817,4 @@
       </object>
     </tomanycont>
   </object>
-
 </objects>
