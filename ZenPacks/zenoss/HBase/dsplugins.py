@@ -86,8 +86,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if ds.zHBase == "false":
                 continue
 
-            print "==" * 20
-            print ds.component
+            #print "==" * 20
+            #print ds.component
             self.component = ds.component
 
             url = hbase_rest_url(
@@ -105,19 +105,22 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 raise HBaseException('No monitoring data.')
 
             results['values'][self.component] = self.process(res)
-            results['maps'][self.component] = self.add_maps(res)
-            print results
+            maps = self.add_maps(res)
+            if maps:
+                results['maps'].append(maps)
 
-            try:
-                pass
-            except HBaseException, e:
-                results['events'].append({
-                    'component': ds.component,
-                    'summary': str(e),
-                    'eventKey': 'hbase_monitoring_error',
-                    'eventClass': '/Status',
-                    'severity': 5,
-                })
+            print results['maps']
+
+            #try:
+            #    pass
+            #except HBaseException, e:
+            #    results['events'].append({
+            #        'component': ds.component,
+            #        'summary': str(e),
+            #        'eventKey': 'hbase_monitoring_error',
+            #        'eventClass': '/Status',
+            #        'severity': 5,
+            #    })
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -128,7 +131,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         results = {
             'values': result['values'],
             'events': result['events'],
-            'maps': []
+            'maps': [],
         }
         for component in result['values'].keys():
             results['events'].append({
@@ -194,8 +197,9 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         is_alive = "Down"
         for node in data["LiveNodes"]:
             if self.component == prepId(node['name']):
-                is_alive = "Up"
-
+                is_alive = "Down"
+        #print "Region server"
+        #print is_alive
         return ObjectMap({
             "compname": "hbase_servers/{0}".format(self.component),
             "modname": "HBase Region Server",
@@ -233,6 +237,29 @@ class HBaseRegionPlugin(HBaseBasePlugin):
                         }
                         return _sum_perf_metrics(res, region)
         return res
+
+    def add_maps(self, result):
+        """
+        Parses resulting data into datapoints
+        """
+        data = json.loads(result)
+        node_id, region_id = self.component.split(NAME_SPLITTER)
+        is_alive = "Down"
+
+        for node in data["LiveNodes"]:
+            if node_id == prepId(node['name']):
+                for region in node["Region"]:
+                    if region_id == prepId(region['name']):
+                        is_alive = "Down"
+
+        print is_alive
+        print format(self.component)
+        return ObjectMap({
+            "compname": "hbase_servers/%s/regions/%s" % (node_id, self.component),
+            "modname": "HBase Regions",
+            "status": is_alive,
+        })
+
 
 
 def _sum_perf_metrics(res, region):
