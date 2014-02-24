@@ -1075,6 +1075,54 @@
         </tomanycont>
       </object>
     </tomanycont>
+    <tomanycont id="thresholds">
+      <object class="MinMaxThreshold" id="MemStoreSize" module="Products.ZenModel.MinMaxThreshold">
+        <property id="eventClass" mode="w" type="string">
+          /Perf
+        </property>
+        <property id="severity" mode="w" type="int">
+          3
+        </property>
+        <property id="dsnames" label="DataPoints" mode="w" type="lines">
+          ['HBaseRegion_memstore_size_mb']
+        </property>
+        <property id="enabled" label="Enabled" mode="w" type="boolean">
+          True
+        </property>
+        <property id="minval" mode="w" type="string">
+          0
+        </property>
+        <property id="maxval" mode="w" type="string">
+          128
+        </property>
+        <property id="escalateCount" mode="w" type="int">
+          0
+        </property>
+      </object>
+      <object class="MinMaxThreshold" id="StoreFileSize" module="Products.ZenModel.MinMaxThreshold">
+        <property id="eventClass" mode="w" type="string">
+          /Perf
+        </property>
+        <property id="severity" mode="w" type="int">
+          3
+        </property>
+        <property id="dsnames" label="DataPoints" mode="w" type="lines">
+          ['HBaseRegion_store_file_size_mb']
+        </property>
+        <property id="enabled" label="Enabled" mode="w" type="boolean">
+          True
+        </property>
+        <property id="minval" mode="w" type="string">
+          0
+        </property>
+        <property id="maxval" mode="w" type="string">
+          10000
+        </property>
+        <property id="escalateCount" mode="w" type="int">
+          0
+        </property>
+      </object>
+    </tomanycont>
     <tomanycont id="graphDefs">
       <object class="GraphDefinition" id="Files" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
