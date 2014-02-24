@@ -84,8 +84,9 @@ class HBaseTableCollector(PythonPlugin):
 
         # List of tables
         tables_oms = []
-        for table in data["table"]:
-            tables_oms.append(self._table_om(table))
+        if data:  # Check if there are any tables.
+            for table in data["table"]:
+                tables_oms.append(self._table_om(table))
 
         maps['hbase_tables'].append(RelationshipMap(
             relname='hbase_tables',

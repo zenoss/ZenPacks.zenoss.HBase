@@ -1,6 +1,6 @@
 ######################################################################
 #
-# Copyright (C) Zenoss, Inc. 2013, all rights reserved.
+# Copyright (C) Zenoss, Inc. 2014, all rights reserved.
 #
 # This content is made available according to terms specified in
 # License.zenoss under the directory where your Zenoss product is
@@ -21,6 +21,7 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap
 
+from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url
@@ -49,9 +50,13 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
 
     def process(self, result):
         """
-        Parses resulting data into datapoints
+        Parses resulting data into datapoints.
         """
         data = json.loads(result)
+
+        # Calculate the percentage of dead servers.
+        overall_servers = len(data['DeadNodes']) + len(data['LiveNodes'])
+        percent_dead_servers = len(data['DeadNodes'])*100.00 / overall_servers
 
         return {
             'live_servers': (len(data['LiveNodes']), 'N'),
@@ -59,6 +64,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             'requests_per_second': (data['requests'], 'N'),
             'regions': (data['regions'], 'N'),
             'average_load': (data['averageLoad'], 'N'),
+            'percent_dead_servers': (percent_dead_servers, 'N'),
         }
 
     def add_maps(self, res):
@@ -73,6 +79,12 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         '''
         pass
 
+    def get_events(self, result):
+        """
+        Return evants for the component.
+        """
+        return []
+
     @defer.inlineCallbacks
     def collect(self, config):
         """
@@ -81,13 +93,12 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         below.
         """
         results = self.new_data()
-        data = ''
         for ds in config.datasources:
             if ds.zHBase == "false":
                 continue
 
-            #print "==" * 20
-            #print ds.component
+            # print "==" * 20
+            # print ds.component
             self.component = ds.component
 
             url = hbase_rest_url(
@@ -98,29 +109,25 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 endpoint=self.endpoint
             )
 
-            res = yield getPage(url, headers={'Accept': 'application/json'})
-            # print res
-
-            if not res:
-                raise HBaseException('No monitoring data.')
-
-            results['values'][self.component] = self.process(res)
-            maps = self.add_maps(res)
-            if maps:
-                results['maps'].append(maps)
-
-            print results['maps']
-
-            #try:
-            #    pass
-            #except HBaseException, e:
-            #    results['events'].append({
-            #        'component': ds.component,
-            #        'summary': str(e),
-            #        'eventKey': 'hbase_monitoring_error',
-            #        'eventClass': '/Status',
-            #        'severity': 5,
-            #    })
+            try:
+                res = yield getPage(
+                    url, headers={'Accept': 'application/json'}
+                )
+                if not res:
+                    raise HBaseException('No monitoring data.')
+                results['values'][self.component] = self.process(res)
+                results['events'].extend(self.get_events(res))
+                maps = self.add_maps(res)
+                if maps:
+                    results['maps'].append(maps)
+            except (Exception, HBaseException), e:
+                results['events'].append({
+                    'component': ds.component,
+                    'summary': str(e),
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Critical,
+                })
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -134,24 +141,23 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             'maps': [],
         }
         for component in result['values'].keys():
-            results['events'].append({
+            results['events'].insert(0, {
                 'component': component,
                 'summary': 'Monitoring ok',
                 'eventKey': 'hbase_monitoring_error',
                 'eventClass': '/Status',
-                'severity': 0,
+                'severity': ZenEventClasses.Clear,
             })
         return results
 
     def onError(self, result, config):
-        severity = 4
         data = self.new_data()
         data['events'].append({
             'component': self.component,
             'summary': str(result),
             'eventKey': 'hbase_monitoring_error',
             'eventClass': '/Status',
-            'severity': severity,
+            'severity': ZenEventClasses.Error,
         })
         return data
 
@@ -188,6 +194,26 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                     res = _sum_perf_metrics(res, region)
                 return res
         return {}
+
+    def get_events(self, result):
+        data = json.loads(result)
+        summary = ''
+        # Check if server exists.
+        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
+        if self.component not in live_nodes:
+            summary = 'This region server does not exist.'
+        # Check if server is dead.
+        if self.component in [prepId(node) for node in data["DeadNodes"]]:
+            summary = 'This region server is dead.'
+        if summary:
+            return [{
+                'component': self.component,
+                'summary': summary,
+                'eventKey': 'hbase_monitoring_error',
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Error,
+            }]
+        return []
 
     def add_maps(self, result):
         """
@@ -238,6 +264,21 @@ class HBaseRegionPlugin(HBaseBasePlugin):
                         return _sum_perf_metrics(res, region)
         return res
 
+    def get_events(self, result):
+        data = json.loads(result)
+        node_id, region_id = self.component.split(NAME_SPLITTER)
+        regions = [prepId(region['name']) for node in data["LiveNodes"]
+            for region in node["Region"]]
+        if region_id not in regions:
+            return [{
+                'component': self.component,
+                'summary': 'This region does not exist.',
+                'eventKey': 'hbase_monitoring_error',
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Error,
+            }]
+        return []
+
     def add_maps(self, result):
         """
         Parses resulting data into datapoints
@@ -259,7 +300,6 @@ class HBaseRegionPlugin(HBaseBasePlugin):
             "modname": "HBase Regions",
             "status": is_alive,
         })
-
 
 
 def _sum_perf_metrics(res, region):
