@@ -366,10 +366,6 @@
       </object>
     </tomanycont>
   </object>
-
-
-
-
   <object class="RRDTemplate" id="/zport/dmd/Devices/rrdTemplates/HBaseRegionServer" module="Products.ZenModel.RRDTemplate">
     <property id="targetPythonClass" mode="w" type="string">
       ZenPacks.zenoss.HBase.HBaseRegionServer
@@ -650,7 +646,6 @@
               AVERAGE
             </property>
           </object>
-
           <object class="DataPointGraphPoint" id="number_of_stores" module="Products.ZenModel.DataPointGraphPoint">
             <property id="sequence" mode="w" type="long">
               0
@@ -771,7 +766,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Total Requests" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -861,7 +855,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Storage" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -920,7 +913,6 @@
               AVERAGE
             </property>
           </object>
-
           <object class="DataPointGraphPoint" id="store_file_index_size_mb" module="Products.ZenModel.DataPointGraphPoint">
             <property id="sequence" mode="w" type="long">
               0
@@ -983,8 +975,6 @@
       </object>
     </tomanycont>
   </object>
-
-  
   <object class="RRDTemplate" id="/zport/dmd/Devices/rrdTemplates/HBaseRegion" module="Products.ZenModel.RRDTemplate">
     <property id="targetPythonClass" mode="w" type="string">
       ZenPacks.zenoss.HBase.HBaseRegion
@@ -1138,7 +1128,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_number_of_stores
+              HBaseRegion_number_of_stores
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1167,7 +1157,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_number_of_store_files
+              HBaseRegion_number_of_store_files
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1175,7 +1165,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Total Requests" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -1228,7 +1217,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_read_requests
+              HBaseRegion_read_requests
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1257,7 +1246,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_write_requests
+              HBaseRegion_write_requests
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1265,7 +1254,6 @@
           </object>
         </tomanycont>
       </object>
-
       <object class="GraphDefinition" id="Storage" module="Products.ZenModel.GraphDefinition">
         <property id="height" mode="w" type="int">
           100
@@ -1318,13 +1306,12 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_store_file_size_mb
+              HBaseRegion_store_file_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
             </property>
           </object>
-
           <object class="DataPointGraphPoint" id="store_file_index_size_mb" module="Products.ZenModel.DataPointGraphPoint">
             <property id="sequence" mode="w" type="long">
               0
@@ -1348,7 +1335,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_store_file_index_size_mb
+              HBaseRegion_store_file_index_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1377,7 +1364,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegionServer_memstore_size_mb
+              HBaseRegion_memstore_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
