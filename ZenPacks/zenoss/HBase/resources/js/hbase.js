@@ -158,6 +158,7 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'monitor'},
                 {name: 'monitored'},
                 {name: 'locking'},
+                {name: 'server'},
             ],
             columns: [{
                 id: 'severity',
@@ -169,6 +170,13 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'name',
                 dataIndex: 'name',
                 header: _t('Name'),
+                renderer: Zenoss.render.linkFromSubgrid,
+            },{
+                id: 'server',
+                dataIndex: 'server',
+                header: _t('Region Server'),
+                renderer: Zenoss.render.linkFromGrid,
+                width: 170
             },{
                 id: 'status',
                 dataIndex: 'status',
