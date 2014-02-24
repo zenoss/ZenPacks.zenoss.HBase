@@ -12,6 +12,7 @@
 import json
 import collections
 import zope.component
+
 from itertools import chain
 from twisted.web.client import getPage
 
@@ -117,7 +118,7 @@ class HBaseCollector(PythonPlugin):
 
         return list(chain.from_iterable(maps.itervalues()))
 
-    def _node_om(self, node, is_alive = False):
+    def _node_om(self, node, is_alive=False):
         """Builds HBase Region Server object map"""
 
         if is_alive:
@@ -139,7 +140,7 @@ class HBaseCollector(PythonPlugin):
         """Builds HBase Region object map"""
         return ObjectMap({
             'id': node_id + NAME_SPLITTER + prepId(region['name']),
-            'title': region['name']
+            'title': region['name'].decode('base64')
         })
 
     def _send_event(self, reason, id, severity, force=False):
