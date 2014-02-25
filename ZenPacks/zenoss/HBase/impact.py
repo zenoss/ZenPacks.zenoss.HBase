@@ -1,48 +1,81 @@
+######################################################################
+#
+# Copyright (C) Zenoss, Inc. 2014, all rights reserved.
+#
+# This content is made available according to terms specified in
+# License.zenoss under the directory where your Zenoss product is
+# installed.
+#
+######################################################################
+
+
 from zope.component import adapts
 from zope.interface import implements
 
+from Products.ZenRelations.ToManyRelationship import ToManyRelationshipBase
+from Products.ZenRelations.ToOneRelationship import ToOneRelationship
 from Products.ZenUtils.guid.interfaces import IGlobalIdentifier
 
 from ZenPacks.zenoss.Impact.impactd import Trigger
-from ZenPacks.zenoss.Impact.stated.interfaces import IStateProvider
 from ZenPacks.zenoss.Impact.impactd.relations import ImpactEdge
-from ZenPacks.zenoss.Impact.impactd.interfaces \
-    import IRelationshipDataProvider, INodeTriggers
+from ZenPacks.zenoss.Impact.impactd.interfaces import IRelationshipDataProvider
+from ZenPacks.zenoss.Impact.impactd.interfaces import INodeTriggers
 
-from .ExampleDevice import ExampleDevice
-from .ExampleComponent import ExampleComponent
+AVAILABILITY = 'AVAILABILITY'
+PERCENT = 'policyPercentageTrigger'
+THRESHOLD = 'policyThresholdTrigger'
+RP = 'ZenPacks.zenoss.HBase'
 
 
-def getRedundancyTriggers(guid, format):
-    """
-    Helper method for generating a good general redunancy set of triggers.
-    """
+def guid(obj):
+    return IGlobalIdentifier(obj).getGUID()
 
-    availability = 'AVAILABILITY'
-    percent = 'policyPercentageTrigger'
-    threshold = 'policyThresholdTrigger'
+
+def edge(source, target):
+    return ImpactEdge(source, target, RP)
+
+
+def getRedundancyTriggers(guid, format, **kwargs):
+    """Return a general redundancy set of triggers."""
 
     return (
-        Trigger(guid, format % 'DOWN', percent, availability, dict(
-            state='DOWN', dependentState='DOWN', threshold='100',
+        Trigger(guid, format % 'DOWN', PERCENT, AVAILABILITY, dict(
+            kwargs, state='DOWN', dependentState='DOWN', threshold='100',
         )),
-        Trigger(guid, format % 'DEGRADED', threshold, availability, dict(
-            state='DEGRADED', dependentState='DEGRADED', threshold='1',
+        Trigger(guid, format % 'DEGRADED', THRESHOLD, AVAILABILITY, dict(
+            kwargs, state='DEGRADED', dependentState='DEGRADED', threshold='1',
         )),
-        Trigger(guid, format % 'ATRISK_1', threshold, availability, dict(
-            state='ATRISK', dependentState='DOWN', threshold='1',
+        Trigger(guid, format % 'ATRISK_1', THRESHOLD, AVAILABILITY, dict(
+            kwargs, state='ATRISK', dependentState='DOWN', threshold='1',
         )),
-        Trigger(guid, format % 'ATRISK_2', threshold, availability, dict(
-            state='ATRISK', dependentState='ATRISK', threshold='1',
+        Trigger(guid, format % 'ATRISK_2', THRESHOLD, AVAILABILITY, dict(
+            kwargs, state='ATRISK', dependentState='ATRISK', threshold='1',
         )),
     )
 
 
-class ExampleDeviceRelationsProvider(object):
-    implements(IRelationshipDataProvider)
-    adapts(ExampleDevice)
+def getPoolTriggers(guid, format, **kwargs):
+    """Return a general pool set of triggers."""
 
-    relationship_provider = "ExampleImpact"
+    return (
+        Trigger(guid, format % 'DOWN', PERCENT, AVAILABILITY, dict(
+            kwargs, state='DOWN', dependentState='DOWN', threshold='100',
+        )),
+        Trigger(guid, format % 'DEGRADED', THRESHOLD, AVAILABILITY, dict(
+            kwargs, state='DEGRADED', dependentState='DEGRADED', threshold='1',
+        )),
+        Trigger(guid, format % 'ATRISK_1', THRESHOLD, AVAILABILITY, dict(
+            kwargs, state='DEGRADED', dependentState='DOWN', threshold='1',
+        )),
+    )
+
+
+class BaseRelationsProvider(object):
+    implements(IRelationshipDataProvider)
+
+    relationship_provider = RP
+    impact_relationships = None
+    impacted_by_relationships = None
 
     def __init__(self, adapted):
         self._object = adapted
@@ -50,83 +83,68 @@ class ExampleDeviceRelationsProvider(object):
     def belongsInImpactGraph(self):
         return True
 
+    def guid(self):
+        if not hasattr(self, '_guid'):
+            self._guid = guid(self._object)
+
+        return self._guid
+
+    def impact(self, relname):
+        relationship = getattr(self._object, relname, None)
+        if relationship:
+            if isinstance(relationship, ToOneRelationship):
+                obj = relationship()
+                if obj:
+                    yield edge(self.guid(), guid(obj))
+
+            elif isinstance(relationship, ToManyRelationshipBase):
+                for obj in relationship():
+                    yield edge(self.guid(), guid(obj))
+
+    def impacted_by(self, relname):
+        relationship = getattr(self._object, relname, None)
+        if relationship:
+            if isinstance(relationship, ToOneRelationship):
+                obj = relationship()
+                if obj:
+                    yield edge(guid(obj), self.guid())
+
+            elif isinstance(relationship, ToManyRelationshipBase):
+                for obj in relationship():
+                    yield edge(guid(obj), self.guid())
+
     def getEdges(self):
-        """
-        An ExampleDevice impacts all of its ExampleComponents.
-        """
-        guid = IGlobalIdentifier(self._object).getGUID()
+        if self.impact_relationships is not None:
+            for impact_relationship in self.impact_relationships:
+                for impact in self.impact(impact_relationship):
+                    yield impact
 
-        for exampleComponent in self._object.exampleComponents():
-            c_guid = IGlobalIdentifier(exampleComponent).getGUID()
-            yield ImpactEdge(guid, c_guid, self.relationship_provider)
-
-
-class ExampleComponentRelationsProvider(object):
-    implements(IRelationshipDataProvider)
-    adapts(ExampleComponent)
-
-    relationship_provider = "ExampleImpact"
-
-    def __init__(self, adapted):
-        self._object = adapted
-
-    def belongsInImpactGraph(self):
-        return True
-
-    def getEdges(self):
-        """
-        An ExampleComponent is impacted by its ExampleDevice.
-        """
-        guid = IGlobalIdentifier(self._object).getGUID()
-
-        d_guid = IGlobalIdentifier(self._object.exampleDevice())
-        yield ImpactEdge(d_guid, guid, self.relationship_provider)
+        if self.impacted_by_relationships is not None:
+            for impacted_by_relationship in self.impacted_by_relationships:
+                for impacted_by in self.impacted_by(impacted_by_relationship):
+                    yield impacted_by
 
 
-class ExampleComponentStateProvider(object):
-    implements(IStateProvider)
-
-    def __init__(self, adapted):
-        self._object = adapted
-
-    @property
-    def eventClasses(self):
-        return ('/Status/',)
-
-    @property
-    def excludeClasses(self):
-        return None
-
-    @property
-    def eventHandlerType(self):
-        return "WORST"
-
-    @property
-    def stateType(self):
-        return 'AVAILABILITY'
-
-    def calcState(self, events):
-        status = None
-        if self._object.attributeOne < 1:
-            return 'DOWN'
-        else:
-            return 'UP'
-
-        cause = None
-        if status == 'DOWN' and events:
-            cause = events[0]
-
-        return status, cause
-
-
-class ExampleComponentTriggers(object):
+class BaseTriggers(object):
     implements(INodeTriggers)
 
     def __init__(self, adapted):
         self._object = adapted
 
-    def get_triggers(self):
-        return getRedundancyTriggers(
-            IGlobalIdentifier(self._object).getGUID(),
-            'DEFAULT_EXAMPLECOMPONENT_TRIGGER_ID_%s',
-        )
+
+# ----------------------------------------------------------------------------
+# Impact relationships
+
+class HBaseRegionServerRelationsProvider(BaseRelationsProvider):
+    impacted_by_relationships = ['hbase_host', 'regions']
+    impact_relationships = ['hbase_host', 'regions']
+
+
+class HBaseRegionRelationsProvider(BaseRelationsProvider):
+    impacted_by_relationships = ['server']
+    impact_relationships = ['server']
+
+
+class HBaseTableRelationsProvider(BaseRelationsProvider):
+    impacted_by_relationships = ['hbase_host']
+    impact_relationships = ['hbase_host']
