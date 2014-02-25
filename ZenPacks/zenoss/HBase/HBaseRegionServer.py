@@ -79,6 +79,7 @@ class IHBaseRegionServerInfo(IComponentInfo):
     API Info interface for HBaseRegionServer.
     '''
 
+    device = schema.Entity(title=_t(u'Device'))
     start_code = schema.TextLine(title=_t(u'Start Code'))
 
 

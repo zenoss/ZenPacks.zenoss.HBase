@@ -31,22 +31,28 @@
         /> -->
 
     <!-- Impact -->
-    <!-- <configure zcml:condition="installed ZenPacks.zenoss.Impact">
+    <configure zcml:condition="installed ZenPacks.zenoss.Impact">
         <include package="ZenPacks.zenoss.Impact" file="meta.zcml"/>
 
         <subscriber
             provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
-            for=".MySQLServer.MySQLServer"
-            factory=".impact.MySQLServerRelationsProvider"
+            for=".HBaseRegionServer.HBaseRegionServer"
+            factory=".impact.HBaseRegionServerRelationsProvider"
             />
 
         <subscriber
             provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
-            for=".MySQLDatabase.MySQLDatabase"
-            factory=".impact.MySQLDatabaseRelationsProvider"
+            for=".HBaseRegion.HBaseRegion"
+            factory=".impact.HBaseRegionRelationsProvider"
             />
 
-    </configure> -->
+        <subscriber
+            provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
+            for=".HBaseTable.HBaseTable"
+            factory=".impact.HBaseTableRelationsProvider"
+            />
+
+    </configure>
 
     <!-- Browser Resources -->
     <browser:resourceDirectory

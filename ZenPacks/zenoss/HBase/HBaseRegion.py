@@ -46,7 +46,8 @@ class IHBaseRegionInfo(IComponentInfo):
     API Info interface for HBaseRegion.
     '''
 
-    pass
+    device = schema.Entity(title=_t(u'Device'))
+    server = schema.Entity(title=_t(u'Region Server'))
 
 
 class HBaseRegionInfo(ComponentInfo):
@@ -59,4 +60,9 @@ class HBaseRegionInfo(ComponentInfo):
     @info
     def status(self):
         return self._object.server().is_alive
+
+    @property
+    @info
+    def server(self):
+        return self._object.server()
 
