@@ -86,7 +86,7 @@ class TestImpact(BaseTestCase):
             pass
 
         import ZenPacks.zenoss.HBase
-        zcml.load_config('configure.zcml', ZenPacks.zenoss.Hbase)
+        zcml.load_config('configure.zcml', ZenPacks.zenoss.HBase)
 
     def device(self):
         if not hasattr(self, '_device'):
