@@ -26,6 +26,7 @@ from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url
 
+import ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector as HBaseCollector
 
 class HBaseException(Exception):
     pass
@@ -67,7 +68,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             'percent_dead_servers': (percent_dead_servers, 'N'),
         }
 
-    def add_maps(self, res):
+    def add_maps(self, res, ds):
         '''
         Create Object/Relationship map for component remodeling.
 
@@ -77,7 +78,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         @type datasource: instance of PythonDataSourceConfig
         @return: ObjectMap|RelationshipMap
         '''
-        pass
+        return []
 
     def get_events(self, result):
         """
@@ -117,10 +118,13 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     raise HBaseException('No monitoring data.')
                 results['values'][self.component] = self.process(res)
                 results['events'].extend(self.get_events(res))
-                maps = self.add_maps(res)
+
+                maps = self.add_maps(res, ds)
+
                 if maps:
-                    results['maps'].append(maps)
+                    results['maps'].extend(maps)
             except (Exception, HBaseException), e:
+                print e
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
@@ -138,7 +142,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         results = {
             'values': result['values'],
             'events': result['events'],
-            'maps': [],
+            'maps': result['maps'],
         }
         for component in result['values'].keys():
             results['events'].insert(0, {
@@ -215,22 +219,12 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
             }]
         return []
 
-    def add_maps(self, result):
+    def add_maps(self, result, ds):
         """
         Parses resulting data into datapoints
         """
-        data = json.loads(result)
-        is_alive = "Down"
-        for node in data["LiveNodes"]:
-            if self.component == prepId(node['name']):
-                is_alive = "Down"
-        #print "Region server"
-        #print is_alive
-        return ObjectMap({
-            "compname": "hbase_servers/{0}".format(self.component),
-            "modname": "HBase Region Server",
-            "is_alive": is_alive,
-        })
+        ds.id = ds.component
+        return HBaseCollector.HBaseCollector().process(ds, result, log)
 
 
 class HBaseRegionPlugin(HBaseBasePlugin):
@@ -278,28 +272,6 @@ class HBaseRegionPlugin(HBaseBasePlugin):
                 'severity': ZenEventClasses.Error,
             }]
         return []
-
-    def add_maps(self, result):
-        """
-        Parses resulting data into datapoints
-        """
-        data = json.loads(result)
-        node_id, region_id = self.component.split(NAME_SPLITTER)
-        is_alive = "Down"
-
-        for node in data["LiveNodes"]:
-            if node_id == prepId(node['name']):
-                for region in node["Region"]:
-                    if region_id == prepId(region['name']):
-                        is_alive = "Down"
-
-        print is_alive
-        print format(self.component)
-        return ObjectMap({
-            "compname": "hbase_servers/%s/regions/%s" % (node_id, self.component),
-            "modname": "HBase Regions",
-            "status": is_alive,
-        })
 
 
 def _sum_perf_metrics(res, region):
