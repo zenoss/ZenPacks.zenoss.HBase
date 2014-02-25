@@ -95,4 +95,4 @@ class HBaseRegionServerInfo(ComponentInfo):
     @property
     @info
     def status(self):
-        return self._object.is_alive
+        return self.is_alive

@@ -26,6 +26,7 @@ from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url
 
+import ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector as HBaseCollector
 
 class HBaseException(Exception):
     pass
@@ -67,6 +68,18 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             'percent_dead_servers': (percent_dead_servers, 'N'),
         }
 
+    def add_maps(self, res, ds):
+        '''
+        Create Object/Relationship map for component remodeling.
+
+        @param res: dict with key enum_info and value Item object
+        @type res: dict
+        @param datasource: device datasourse
+        @type datasource: instance of PythonDataSourceConfig
+        @return: ObjectMap|RelationshipMap
+        '''
+        return []
+
     def get_events(self, result):
         """
         Return evants for the component.
@@ -105,7 +118,13 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     raise HBaseException('No monitoring data.')
                 results['values'][self.component] = self.process(res)
                 results['events'].extend(self.get_events(res))
+
+                maps = self.add_maps(res, ds)
+
+                if maps:
+                    results['maps'].extend(maps)
             except (Exception, HBaseException), e:
+                print e
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
@@ -123,7 +142,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         results = {
             'values': result['values'],
             'events': result['events'],
-            'maps': []
+            'maps': result['maps'],
         }
         for component in result['values'].keys():
             results['events'].insert(0, {
@@ -199,6 +218,13 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                 'severity': ZenEventClasses.Error,
             }]
         return []
+
+    def add_maps(self, result, ds):
+        """
+        Parses resulting data into datapoints
+        """
+        ds.id = ds.component
+        return HBaseCollector.HBaseCollector().process(ds, result, log)
 
 
 class HBaseRegionPlugin(HBaseBasePlugin):
