@@ -28,7 +28,16 @@ from .utils import updateToMany, updateToOne
 class HBaseRegion(HBaseComponent):
     meta_type = portal_type = 'HBaseRegion'
 
+    table = None
+    start_key = None
+    region_id = None
+    region_hash = None
+
     _properties = HBaseComponent._properties + (
+        {'id': 'table', 'type': 'string'},
+        {'id': 'start_key', 'type': 'string'},
+        {'id': 'region_id', 'type': 'string'},
+        {'id': 'region_hash', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
@@ -48,6 +57,10 @@ class IHBaseRegionInfo(IComponentInfo):
 
     device = schema.Entity(title=_t(u'Device'))
     server = schema.Entity(title=_t(u'Region Server'))
+    table = schema.TextLine(title=_t(u'Table'))
+    start_key = schema.TextLine(title=_t(u'Start Key'))
+    region_id = schema.TextLine(title=_t(u'Region ID'))
+    region_hash = schema.TextLine(title=_t(u'Hash'))
 
 
 class HBaseRegionInfo(ComponentInfo):
@@ -55,6 +68,11 @@ class HBaseRegionInfo(ComponentInfo):
 
     implements(IHBaseRegionInfo)
     adapts(HBaseRegion)
+
+    table = ProxyProperty('table')
+    start_key = ProxyProperty('start_key')
+    region_id = ProxyProperty('region_id')
+    region_hash = ProxyProperty('region_hash')
 
     @property
     @info
