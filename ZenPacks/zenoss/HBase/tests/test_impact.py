@@ -85,8 +85,8 @@ class TestImpact(BaseTestCase):
         except ImportError:
             pass
 
-        import ZenPacks.zenoss.MySqlMonitor
-        zcml.load_config('configure.zcml', ZenPacks.zenoss.MySqlMonitor)
+        import ZenPacks.zenoss.HBase
+        zcml.load_config('configure.zcml', ZenPacks.zenoss.Hbase)
 
     def device(self):
         if not hasattr(self, '_device'):
@@ -96,19 +96,19 @@ class TestImpact(BaseTestCase):
 
     @require_impact
     def test_HBaseRegionServerImpacts(self):
-        sr = self.device().getObjByPath(
-            'hbase_servers/server0')
+        region_server = self.device().getObjByPath(
+            'hbase_servers/region_server0')
 
-        impacts, impacted_by = impacts_for(sr)
+        impacts, impacted_by = impacts_for(region_server)
 
-        self.assertTrue('device' in impacts)
+        self.assertTrue('hbase_test_device' in impacts)
         self.assertTrue('region0-0' in impacted_by)
 
     @require_impact
     def test_HBaseRegionImpacts(self):
-        db = self.device().getObjByPath(
-            'hbase_servers/server0/regions/region0-0')
+        region = self.device().getObjByPath(
+            'hbase_servers/region_server0/regions/region0-0')
 
-        impacts, impacted_by = impacts_for(db)
+        impacts, impacted_by = impacts_for(region)
 
-        self.assertTrue('server0' in impacts)
+        self.assertTrue('region_server0' in impacts)
