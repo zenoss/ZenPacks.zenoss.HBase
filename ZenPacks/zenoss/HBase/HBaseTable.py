@@ -52,6 +52,7 @@ class IHBaseTableInfo(IComponentInfo):
     API Info interface for HBaseTable.
     '''
 
+    device = schema.Entity(title=_t(u'Device'))
     enabled = schema.TextLine(title=_t(u'Enabled'))
     compaction = schema.TextLine(title=_t(u'Compaction'))
 
