@@ -69,20 +69,26 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         }
 
     def add_maps(self, res, ds):
-        '''
+        """
         Create Object/Relationship map for component remodeling.
 
-        @param res: dict with key enum_info and value Item object
-        @type res: dict
+        @param res: the data returned from getPage call
+        @type res: str
         @param datasource: device datasourse
         @type datasource: instance of PythonDataSourceConfig
         @return: ObjectMap|RelationshipMap
-        '''
+        """
         return []
 
     def get_events(self, result, ds):
         """
-        Return evants for the component.
+        Form events for a particular component.
+
+        @param result: the data returned from getPage call
+        @type result: str
+        @param ds: device datasourse
+        @type ds: instance of PythonDataSourceConfig
+        @return: list of events
         """
         return []
 
@@ -94,10 +100,10 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         below.
         """
         results = self.new_data()
-        # Check the connection and collect data.
         ds0 = config.datasources[0]
         if ds0.zHBase == "false":
             defer.returnValue(results)
+        # Check the connection and collect data.
         try:
             url = hbase_rest_url(
                 user=ds0.zHBaseUsername,
@@ -119,6 +125,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 if maps:
                     results['maps'].extend(maps)
         except (Exception, HBaseException), e:
+            # Send connection error event for each component.
+            # Could be done only for device.
             for ds in config.datasources:
                 results['events'].append({
                     'component': ds.component,
@@ -127,7 +135,6 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Critical,
                 })
-    
         defer.returnValue(results)
 
     def onSuccess(self, result, config):

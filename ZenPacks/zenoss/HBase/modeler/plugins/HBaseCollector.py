@@ -128,7 +128,7 @@ class HBaseCollector(PythonPlugin):
                 'title': node['name'],
                 'start_code': node['startCode'],
                 'is_alive': "Up",
-                'setClearEvents': True
+                # 'setClearEvents': True
             })
         else:
             return ObjectMap({
@@ -136,7 +136,7 @@ class HBaseCollector(PythonPlugin):
                 'title': node,
                 'start_code': node,
                 'is_alive': "Down",
-                'setClearEvents': True
+                # 'setClearEvents': True
             })
 
     def _region_om(self, region, node_id, reg_num):
