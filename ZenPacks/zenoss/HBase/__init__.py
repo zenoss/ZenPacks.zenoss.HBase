@@ -98,8 +98,13 @@ def setErrorNotification(self, msg):
 def getErrorNotification(self):
     return
 
+
+def regionservers(self):
+    return self.hbase_servers.objectIds()
+
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
+Device.regionserver_ids = property(regionservers)
 
 
 class ZenPack(ZenPackBase):

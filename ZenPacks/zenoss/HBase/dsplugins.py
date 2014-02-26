@@ -9,24 +9,23 @@
 ######################################################################
 
 from logging import getLogger
-log = getLogger('zen.python')
+log = getLogger('zen.zenpython')
 
 import re
 import time
 import json
+
 from twisted.web.client import getPage
 from twisted.internet import defer
 
-from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
-    import PythonDataSourcePlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap
-
 from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url
-
-import ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector as HBaseCollector
+from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
+from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
+    import PythonDataSourcePlugin
 
 class HBaseException(Exception):
     pass
@@ -42,7 +41,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         'zHBase',
         'zHBaseUsername',
         'zHBasePasword',
-        'zHBasePort'
+        'zHBasePort',
+        'regionserver_ids'
     )
 
     component = None
@@ -80,7 +80,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         '''
         return []
 
-    def get_events(self, result):
+    def get_events(self, result, ds):
         """
         Return evants for the component.
         """
@@ -94,36 +94,34 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         below.
         """
         results = self.new_data()
-        for ds in config.datasources:
-            if ds.zHBase == "false":
-                continue
 
-            #print "==" * 20
-            # print ds.component
-            self.component = ds.component
+        # Check the connection and collect data.
+        ds0 = config.datasources[0]
+        if ds0.zHBase == "false":
+            defer.returnValue(results)
+        try:
 
             url = hbase_rest_url(
-                user=ds.zHBaseUsername,
-                passwd=ds.zHBasePasword,
-                port=ds.zHBasePort,
-                host=ds.manageIp,
+                user=ds0.zHBaseUsername,
+                passwd=ds0.zHBasePasword,
+                port=ds0.zHBasePort,
+                host=ds0.manageIp,
                 endpoint=self.endpoint
             )
+            res = yield getPage(url, headers={'Accept': 'application/json'})
+            if not res:
+                raise HBaseException('No monitoring data.')
 
-            try:
-                res = yield getPage(
-                    url, headers={'Accept': 'application/json'}
-                )
-                if not res:
-                    raise HBaseException('No monitoring data.')
+            # Process data if was returned.
+            for ds in config.datasources:
+                self.component = ds.component
                 results['values'][self.component] = self.process(res)
-                results['events'].extend(self.get_events(res))
-
+                results['events'].extend(self.get_events(res, ds))
                 maps = self.add_maps(res, ds)
-
                 if maps:
                     results['maps'].extend(maps)
-            except (Exception, HBaseException), e:
+        except (Exception, HBaseException), e:
+            for ds in config.datasources:
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
@@ -131,6 +129,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Critical,
                 })
+    
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -198,32 +197,46 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                 return res
         return {}
 
-    def get_events(self, result):
+    def get_events(self, result, ds):
         data = json.loads(result)
-        summary = ''
-        # Check if server exists.
-        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
-        if self.component not in live_nodes:
-            summary = 'This region server does not exist.'
-        # Check if server is dead.
-        if self.component in [prepId(node) for node in data["DeadNodes"]]:
-            summary = 'This region server is dead.'
-        if summary:
-            return [{
+        events = []
+        # Check for dead servers.
+        dead_nodes = [prepId(node) for node in data["DeadNodes"]]
+        if self.component in dead_nodes:
+            events.append({
                 'component': self.component,
-                'summary': summary,
+                'summary': 'This region server is dead.',
                 'eventKey': 'hbase_monitoring_error',
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Error,
-            }]
-        return []
+            })
+        # Check for removed/added servers.
+        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
+        all_nodes = dead_nodes + live_nodes
+        
+        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
+        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
+        for server in added:
+            events.append({
+                'component': server,
+                'summary': "Region server '{0}' is added.".format(server),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        for server in removed:
+            events.append({
+                'summary': "Region server '{0}' is removed.".format(server),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        return events
 
     def add_maps(self, result, ds):
         """
         Parses resulting data into datapoints
         """
         ds.id = ds.component
-        return HBaseCollector.HBaseCollector().process(ds, result, log)
+        return HBaseCollector().process(ds, result, log)
 
 
 class HBaseRegionPlugin(HBaseBasePlugin):
@@ -256,21 +269,6 @@ class HBaseRegionPlugin(HBaseBasePlugin):
                         }
                         return _sum_perf_metrics(res, region)
         return res
-
-    def get_events(self, result):
-        data = json.loads(result)
-        node_id, region_id = self.component.split(NAME_SPLITTER)
-        regions = [prepId(region['name']) for node in data["LiveNodes"]
-            for region in node["Region"]]
-        if region_id not in regions:
-            return [{
-                'component': self.component,
-                'summary': 'This region does not exist.',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Error,
-            }]
-        return []
 
 
 class HBaseTablePlugin(HBaseBasePlugin):
