@@ -95,7 +95,8 @@ class HBaseCollector(PythonPlugin):
             # List of regions
             region_oms = []
             for region in node["Region"]:
-                region_oms.append(self._region_om(region, node_id))
+                reg_num = node["Region"].index(region) + 1
+                region_oms.append(self._region_om(region, node_id, reg_num))
 
             maps['regions'].append(RelationshipMap(
                 compname='hbase_servers/%s' % node_id,
@@ -126,21 +127,28 @@ class HBaseCollector(PythonPlugin):
                 'id': prepId(node['name']),
                 'title': node['name'],
                 'start_code': node['startCode'],
-                'is_alive': "Up"
+                'is_alive': "Up",
+                'setClearEvents': True
             })
         else:
             return ObjectMap({
                 'id': prepId(node),
                 'title': node,
                 'start_code': node,
-                'is_alive': "Down"
+                'is_alive': "Down",
+                'setClearEvents': True
             })
 
-    def _region_om(self, region, node_id):
+    def _region_om(self, region, node_id, reg_num):
         """Builds HBase Region object map"""
+        table, start_key, r_id = region['name'].decode('base64').split(',')
         return ObjectMap({
             'id': node_id + NAME_SPLITTER + prepId(region['name']),
-            'title': region['name'].decode('base64')
+            'title': 'Region {0}'.format(reg_num),
+            'table': table,
+            'start_key': start_key,
+            'region_id': r_id,
+            'region_hash': region['name']
         })
 
     def _send_event(self, reason, id, severity, force=False):
