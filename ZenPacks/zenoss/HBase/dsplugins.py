@@ -98,7 +98,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if ds.zHBase == "false":
                 continue
 
-            # print "==" * 20
+            #print "==" * 20
             # print ds.component
             self.component = ds.component
 
@@ -124,7 +124,6 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 if maps:
                     results['maps'].extend(maps)
             except (Exception, HBaseException), e:
-                print e
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
@@ -274,6 +273,75 @@ class HBaseRegionPlugin(HBaseBasePlugin):
         return []
 
 
+class HBaseTablePlugin(HBaseBasePlugin):
+    """
+    Datasource for HBase Table component.
+    """
+    endpoint = '/table.jsp?name={0}'
+
+    @defer.inlineCallbacks
+    def collect(self, config):
+        """
+        This method return a Twisted deferred. The deferred results will
+        be sent to the onResult then either onSuccess or onError callbacks
+        below.
+        """
+        results = self.new_data()
+        for ds in config.datasources:
+            if ds.zHBase == "false":
+                continue
+
+            #print "==" * 20
+            # print ds.component
+            self.component = ds.component
+
+            url = hbase_rest_url(
+                user=ds.zHBaseUsername,
+                passwd=ds.zHBasePasword,
+                port='60010',
+                host=ds.manageIp,
+                endpoint=self.endpoint.format(self.component)
+            )
+
+            try:
+                res = yield getPage(
+                    url, headers={'Accept': 'text/html'}
+                )
+                if not res:
+                    raise HBaseException('No monitoring data.')
+
+                table_stat = _get_table_status(res)
+
+                if table_stat:
+                    maps = self.add_maps(table_stat, ds)
+
+                    if maps:
+                        results['maps'].extend(maps)
+
+            except (Exception, HBaseException), e:
+                results['events'].append({
+                    'component': ds.component,
+                    'summary': str(e),
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Critical,
+                })
+        defer.returnValue(results)
+
+    def add_maps(self, result, ds):
+        """
+        Parses resulting data into datapoints
+        """
+        enabled, compaction = result
+        maps = [ObjectMap({
+                "compname": "hbase_tables/%s" % self.component,
+                "modname": "HBase table state",
+                "enabled": enabled,
+                "compaction": compaction
+            })]
+        return maps
+
+
 def _sum_perf_metrics(res, region):
     """
     Util function for summing region metrics
@@ -297,3 +365,15 @@ def _sum_perf_metrics(res, region):
     res['total_compacting_kv'] = (res['total_compacting_kv'][0] + \
         region['totalCompactingKVs'], 'N')
     return res
+
+
+def _get_table_status(res):
+
+    res = res.replace('\n', '').replace(' ', '')
+    expression = r'.+<td>Enabled</td><td>(?P<enabled>\w+)</td>.+<td>Compaction</td><td>(?P<compaction>\w+)</td>'
+    matcher = re.compile(expression)
+    match = matcher.match(res)
+    if match:
+        return (match.group('enabled'), match.group('compaction'))
+
+    return False

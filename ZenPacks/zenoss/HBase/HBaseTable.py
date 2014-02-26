@@ -64,4 +64,4 @@ class HBaseTableInfo(ComponentInfo):
     adapts(HBaseTable)
 
     enabled = ProxyProperty('enabled')
-    enabled = ProxyProperty('compaction')
+    compaction = ProxyProperty('compaction')
