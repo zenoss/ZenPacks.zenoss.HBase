@@ -12,7 +12,6 @@ from zope.interface import implements
 
 from Products.ZenRelations.RelSchema import ToOne, ToMany, ToManyCont
 
-from Products.Zuul import getFacade
 from Products.Zuul.catalog.paths import DefaultPathReporter, relPath
 from Products.Zuul.decorators import info
 from Products.Zuul.form import schema
