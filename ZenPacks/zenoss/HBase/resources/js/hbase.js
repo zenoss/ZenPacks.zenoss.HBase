@@ -26,7 +26,7 @@ Ext.apply(Zenoss.render, {
     },
 
     trueFalse: function(value) {
-        var str = value == 'yes' ? 'clear' : '';
+        var str = value == 'true' ? 'clear' : '';
         return '<div class="severity-icon-small '+ str +'"><'+'/div>';
     }
 });
@@ -110,6 +110,8 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'locking'},
                 {name: 'start_code'},
                 {name: 'is_alive'},
+                {name: 'enabled'},
+                {name: 'compaction'},
             ],
             columns: [{
                 id: 'severity',
@@ -121,6 +123,15 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'name',
                 dataIndex: 'name',
                 header: _t('Name'),
+            },{
+                id: 'compaction',
+                dataIndex: 'compaction',
+                header: _t('Compaction'),
+            },{
+                id: 'enabled',
+                dataIndex: 'enabled',
+                header: _t('Enabled'),
+                renderer: Zenoss.render.trueFalse,
             },{
                 id: 'monitored',
                 dataIndex: 'monitored',
