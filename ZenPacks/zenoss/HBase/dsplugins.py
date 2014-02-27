@@ -12,7 +12,6 @@ from logging import getLogger
 log = getLogger('zen.zenpython')
 
 import re
-import time
 import json
 
 from twisted.web.client import getPage
@@ -26,6 +25,7 @@ from ZenPacks.zenoss.HBase.utils import hbase_rest_url
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
+
 
 class HBaseException(Exception):
     pass
@@ -69,20 +69,26 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         }
 
     def add_maps(self, res, ds):
-        '''
+        """
         Create Object/Relationship map for component remodeling.
 
-        @param res: dict with key enum_info and value Item object
-        @type res: dict
+        @param res: the data returned from getPage call
+        @type res: str
         @param datasource: device datasourse
         @type datasource: instance of PythonDataSourceConfig
         @return: ObjectMap|RelationshipMap
-        '''
+        """
         return []
 
     def get_events(self, result, ds):
         """
-        Return evants for the component.
+        Form events for a particular component.
+
+        @param result: the data returned from getPage call
+        @type result: str
+        @param ds: device datasourse
+        @type ds: instance of PythonDataSourceConfig
+        @return: list of events
         """
         return []
 
@@ -94,10 +100,10 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         below.
         """
         results = self.new_data()
-        # Check the connection and collect data.
         ds0 = config.datasources[0]
         if ds0.zHBase == "false":
             defer.returnValue(results)
+        # Check the connection and collect data.
         try:
             url = hbase_rest_url(
                 user=ds0.zHBaseUsername,
@@ -119,6 +125,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                 if maps:
                     results['maps'].extend(maps)
         except (Exception, HBaseException), e:
+            # Send connection error event for each component.
+            # Could be done only for device (in that case remove loop).
             for ds in config.datasources:
                 results['events'].append({
                     'component': ds.component,
@@ -127,7 +135,6 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Critical,
                 })
-    
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -135,20 +142,16 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         This method return a data structure with zero or more events, values
         and maps.  result - is what returned from collect.
         """
-        results = {
-            'values': result['values'],
-            'events': result['events'],
-            'maps': result['maps'],
-        }
-        for component in result['values'].keys():
-            results['events'].insert(0, {
-                'component': component,
-                'summary': 'Monitoring ok',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Clear,
-            })
-        return results
+        if not result['events']:
+            for ds in config.datasources:
+                result['events'].append({
+                    'component': ds.component,
+                    'summary': 'Monitoring ok',
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Clear,
+                })
+        return result
 
     def onError(self, result, config):
         data = self.new_data()
@@ -211,7 +214,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         # Check for removed/added servers.
         live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
         all_nodes = dead_nodes + live_nodes
-        
+
         added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
         removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
         for server in added:
@@ -269,6 +272,67 @@ class HBaseRegionPlugin(HBaseBasePlugin):
         return res
 
 
+class HBaseTablePlugin(HBaseBasePlugin):
+    """
+    Datasource for HBase Table component.
+    """
+    endpoint = '/table.jsp?name={0}'
+
+    @defer.inlineCallbacks
+    def collect(self, config):
+        """
+        This method overrides the HBaseBasePlugin.collect method.
+        """
+        results = self.new_data()
+        for ds in config.datasources:
+            if ds.zHBase == "false":
+                continue
+
+            self.component = ds.component
+            url = hbase_rest_url(
+                user=ds.zHBaseUsername,
+                passwd=ds.zHBasePasword,
+                port='60010',
+                host=ds.manageIp,
+                endpoint=self.endpoint.format(self.component)
+            )
+
+            try:
+                res = yield getPage(
+                    url, headers={'Accept': 'application/json'}
+                )
+                if not res:
+                    raise HBaseException('No monitoring data.')
+                # results['maps'].extend(self.add_maps(res, ds))
+                results['events'].extend(self.get_events(res, ds))
+            except (Exception, HBaseException), e:
+                results['events'].append({
+                    'component': ds.component,
+                    'summary': str(e),
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Critical,
+                })
+        defer.returnValue(results)
+
+    def get_events(self, result, ds):
+        enabled = _table_enabled(result)
+        summary = ''
+        if enabled != 'true':
+            summary = "The table '{0}' is disabled.".format(self.component)
+        if not enabled:
+            summary = "The table '{0}' is dropped.".format(self.component)
+        if summary:
+            return [{
+                'component': self.component,
+                'summary': summary,
+                'eventKey': 'hbase_monitoring_error',
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Error,
+            }]
+        return []
+
+
 def _sum_perf_metrics(res, region):
     """
     Util function for summing region metrics
@@ -292,3 +356,25 @@ def _sum_perf_metrics(res, region):
     res['total_compacting_kv'] = (res['total_compacting_kv'][0] + \
         region['totalCompactingKVs'], 'N')
     return res
+
+
+def _table_enabled(res):
+    """
+    Parse the getPage result for the table status.
+    """
+    res = res.replace('\n', '').replace(' ', '')
+    matcher = re.compile(r'.+<td>Enabled</td><td>(?P<enabled>\w+)</td>')
+    match = matcher.match(res)
+    if match:
+        return match.group('enabled')
+
+
+def _table_compaction(res):
+    """
+    Parse the getPage result for the table compaction.
+    """
+    res = res.replace('\n', '').replace(' ', '')
+    matcher = re.compile(r'.+<td>Compaction</td><td>(?P<compaction>\w+)</td>')
+    match = matcher.match(res)
+    if match:
+        return match.group('compaction')

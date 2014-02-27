@@ -47,32 +47,6 @@ class HBaseRegionServer(HBaseComponent):
     def device(self):
         return self.hbase_host()
 
-    def getClearEvents(self):
-        self.clear_events()
-        return True
-
-    def setClearEvents(self, value):
-        self.clear_events()
-
-    def clear_events(self):
-        zep = getFacade('zep')
-        zep_filter = zep.createEventFilter(
-            element_identifier=(self.hbase_host().id),
-            event_class=('/Status'),
-            severity=(5, 4),
-            status=(0, 1)
-        )
-        results = zep.getEventSummariesGenerator(filter=zep_filter)
-
-        component_list = [
-            x.getObject().id for x in self.hbase_host().componentSearch()
-        ]
-        for res in results:
-            key = res['occurrence'][0]['actor'].get('element_sub_identifier')
-            if key and key not in component_list:
-                del_filter = zep.createEventFilter(uuid=res['uuid'])
-                zep.closeEventSummaries(eventFilter=del_filter)
-
 
 class IHBaseRegionServerInfo(IComponentInfo):
     '''

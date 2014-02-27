@@ -83,4 +83,3 @@ class HBaseRegionInfo(ComponentInfo):
     @info
     def server(self):
         return self._object.server()
-
