@@ -46,6 +46,36 @@ class TestHBaseBasePlugin(BaseTestCase):
         result = self.plugin.get_events(data, sentinel.ds)
         self.assertEquals(result, [])
 
+    def test_onSuccess(self):
+        data = self.plugin.new_data()
+        config = ds = Mock()
+        ds.component = sentinel.component
+        config.datasources = [ds]
+        # Test clear events if no events came in data.
+        self.assertIn({
+            'severity': 0,
+            'eventClass': '/Status',
+            'component': sentinel.component,
+            'eventKey': 'hbase_monitoring_error',
+            'summary': 'Monitoring ok'
+        }, self.plugin.onSuccess(data, config).get('events'))
+
+        data['events'] = 'test'
+        # Test not clear events if there are events in data.
+        self.assertIn(
+            'test', self.plugin.onSuccess(data, config).get('events'))
+
+    def test_onError(self):
+        self.plugin.component = sentinel.component
+        # Test clear events if no events came in data.
+        self.assertIn({
+            'severity': 4,
+            'eventClass': '/Status',
+            'component': sentinel.component,
+            'eventKey': 'hbase_monitoring_error',
+            'summary': 'test'
+        }, self.plugin.onError('test', sentinel.config).get('events'))
+
 
 class TestHBaseRegionServerPlugin(BaseTestCase):
 
@@ -95,12 +125,11 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
         }, result)
         # Check event for removed server.
         ds.regionserver_ids = ['localhost_11111', 'test']
-        result = self.plugin.get_events(data, ds)
         self.assertIn({
             'eventClass': '/Status',
             'severity': 2,
             'summary': "Region server 'test' is removed."
-        }, result)
+        }, self.plugin.get_events(data, ds))
 
 
 class TestHBaseRegionPlugin(BaseTestCase):
@@ -146,6 +175,16 @@ class TestHBaseTablePlugin(BaseTestCase):
             'eventKey': 'hbase_monitoring_error',
             'summary': "The table 'sentinel.component' is disabled."
         }, result)
+
+    def test_add_maps(self):
+        data = load_data('HBaseTableStatus.txt')
+        self.plugin.component = sentinel.component
+        result = self.plugin.add_maps(data, sentinel.ds)
+        om = result[0]
+        self.assertEquals(om.compname, 'hbase_tables/sentinel.component')
+        self.assertEquals(om.modname, 'HBase table state')
+        self.assertEquals(om.enabled, 'false')
+        self.assertEquals(om.compaction, '')
 
 
 def test_suite():

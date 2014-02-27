@@ -46,8 +46,10 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         self.applyDataMap = ApplyDataMap()._applyDataMap
 
         # Mock clear events function.
-        from ZenPacks.zenoss.HBase.HBaseRegionServer import HBaseRegionServer
-        HBaseRegionServer.clear_events = lambda x: 'test'
+        from Products.ZenModel.Device import Device
+        mock = lambda *args, **kwargs: None
+        Device.getClearEvents = mock
+        Device.setClearEvents = mock
 
     def _loadZenossData(self):
         if hasattr(self, '_loaded'):
@@ -89,15 +91,14 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         self.assertEquals(region.start_key, '')
         self.assertEquals(region.region_id, '0')
         self.assertEquals(region.region_hash, 'LVJPT1QtLCww')
-        self.assertEquals(region.clear_events(), 'test')
 
     def test_HBaseTable(self):
         self._loadZenossData()
         table = self.d.hbase_tables._getOb('test_table')
 
         self.assertEquals(table.device().id, 'hbase.testDevice')
-        self.assertEquals(table.enabled, None)
-        self.assertEquals(table.compaction, None)
+        self.assertEquals(table.enabled, '')
+        self.assertEquals(table.compaction, '')
 
 
 def test_suite():

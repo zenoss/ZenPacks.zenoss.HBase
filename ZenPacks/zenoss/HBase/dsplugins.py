@@ -300,28 +300,23 @@ class HBaseTablePlugin(HBaseBasePlugin):
 
             try:
                 res = yield getPage(
-
                     url, headers={'Accept': 'text/html'}
                 )
 
                 if not res:
                     raise HBaseException('No monitoring data.')
                 results['events'].extend(self.get_events(res, ds))
-
-                if res:
-                    table_stat = {
-                        'enabled': _table_enabled(res),
-                        'compaction': _table_compaction(res),
-                    }
-                    maps = self.add_maps(table_stat, ds)
-
-                    if maps:
-                        results['maps'].extend(maps)
+                maps = self.add_maps(res, ds)
+                if maps:
+                    results['maps'].extend(maps)
 
             except (Exception, HBaseException), e:
+                summary = str(e)
+                if '500' in summary:
+                    summary = "The table is broken or does not exist."
                 results['events'].append({
                     'component': ds.component,
-                    'summary': str(e),
+                    'summary': summary,
                     'eventKey': 'hbase_monitoring_error',
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Critical,
@@ -329,17 +324,12 @@ class HBaseTablePlugin(HBaseBasePlugin):
         defer.returnValue(results)
 
     def add_maps(self, result, ds):
-        """
-        Parses resulting data into datapoints
-        """
-        enabled, compaction = result
-        maps = [ObjectMap({
-                "compname": "hbase_tables/%s" % self.component,
-                "modname": "HBase table state",
-                "enabled": result['enabled'],
-                "compaction": result['compaction']
-            })]
-        return maps
+        return [ObjectMap({
+            "compname": "hbase_tables/%s" % self.component,
+            "modname": "HBase table state",
+            "enabled": _table_enabled(result),
+            "compaction": _table_compaction(result)
+        })]
 
     def get_events(self, result, ds):
         enabled = _table_enabled(result)
@@ -393,7 +383,7 @@ def _table_enabled(res):
     match = matcher.match(res)
     if match:
         return match.group('enabled')
-    return False
+    return ''
 
 
 def _table_compaction(res):
@@ -405,5 +395,4 @@ def _table_compaction(res):
     match = matcher.match(res)
     if match:
         return match.group('compaction')
-    return False
-
+    return ''

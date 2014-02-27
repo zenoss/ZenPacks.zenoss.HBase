@@ -16,6 +16,7 @@ log = logging.getLogger('zen.HBase')
 
 import Globals
 
+from Products.Zuul import getFacade
 from Products.ZenEvents.EventManagerBase import EventManagerBase
 from Products.ZenModel.Device import Device
 from Products.ZenModel.ZenPack import ZenPack as ZenPackBase
@@ -103,38 +104,56 @@ def regionservers(self):
     return self.hbase_servers.objectIds()
 
 
-# # TODO: Find better solution for non-component events clearing.
-# def getClearEvents(self):
-#     self.clear_events()
-#     return True
+def getClearEvents(self):
+    """
+    Attempt to clear all non-existing component events.
 
-# def setClearEvents(self, value):
-#     self.clear_events()
+    The modeler plugin calls setClearEvents which will cause
+    ApplyDataMap to call this getter method first to validate that
+    the setter even needs to be run.
+    """
+    self.clear_events()
+    return True
 
-# def clear_events(self):
-#     zep = getFacade('zep')
-#     zep_filter = zep.createEventFilter(
-#         element_identifier=(self.id),
-#         event_class=('/Status'),
-#         severity=(5, 4),
-#         status=(0, 1)
-#     )
-#     results = zep.getEventSummariesGenerator(filter=zep_filter)
 
-#     component_list = [x.getObject().id for x in self.componentSearch()]
-#     for res in results:
-#         key = res['occurrence'][0]['actor'].get('element_sub_identifier')
-#         if key and key not in component_list:
-#             del_filter = zep.createEventFilter(uuid=res['uuid'])
-#             zep.closeEventSummaries(eventFilter=del_filter)
+def setClearEvents(self, value):
+    """
+    This method should typically never be called because the
+    getClearEvents method will always return the same value that
+    the modeler plugin sets.
+    """
+    self.clear_events()
+
+
+def clear_events(self):
+    """
+    Discover and clear all events, related to components which had
+    been deleted.
+    """
+    zep = getFacade('zep')
+    zep_filter = zep.createEventFilter(
+        element_identifier=(self.id),
+        event_class=('/Status'),
+        severity=(5, 4),
+        status=(0, 1)
+    )
+    results = zep.getEventSummariesGenerator(filter=zep_filter)
+
+    component_list = [x.getObject().id for x in self.componentSearch()]
+    for res in results:
+        key = res['occurrence'][0]['actor'].get('element_sub_identifier')
+        if key and key not in component_list:
+            del_filter = zep.createEventFilter(uuid=res['uuid'])
+            zep.closeEventSummaries(eventFilter=del_filter)
 
 
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
 Device.regionserver_ids = property(regionservers)
-# Device.getClearEvents = getClearEvents
-# Device.setClearEvents = setClearEvents
-# Device.clear_events = clear_events
+Device.getClearEvents = getClearEvents
+Device.setClearEvents = setClearEvents
+Device.clear_events = clear_events
+
 
 class ZenPack(ZenPackBase):
     """

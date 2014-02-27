@@ -132,6 +132,7 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 dataIndex: 'enabled',
                 header: _t('Enabled'),
                 renderer: Zenoss.render.trueFalse,
+                width: 60
             },{
                 id: 'monitored',
                 dataIndex: 'monitored',
