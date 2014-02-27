@@ -102,10 +102,39 @@ def getErrorNotification(self):
 def regionservers(self):
     return self.hbase_servers.objectIds()
 
+
+# # TODO: Find better solution for non-component events clearing.
+# def getClearEvents(self):
+#     self.clear_events()
+#     return True
+
+# def setClearEvents(self, value):
+#     self.clear_events()
+
+# def clear_events(self):
+#     zep = getFacade('zep')
+#     zep_filter = zep.createEventFilter(
+#         element_identifier=(self.id),
+#         event_class=('/Status'),
+#         severity=(5, 4),
+#         status=(0, 1)
+#     )
+#     results = zep.getEventSummariesGenerator(filter=zep_filter)
+
+#     component_list = [x.getObject().id for x in self.componentSearch()]
+#     for res in results:
+#         key = res['occurrence'][0]['actor'].get('element_sub_identifier')
+#         if key and key not in component_list:
+#             del_filter = zep.createEventFilter(uuid=res['uuid'])
+#             zep.closeEventSummaries(eventFilter=del_filter)
+
+
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
 Device.regionserver_ids = property(regionservers)
-
+# Device.getClearEvents = getClearEvents
+# Device.setClearEvents = setClearEvents
+# Device.clear_events = clear_events
 
 class ZenPack(ZenPackBase):
     """

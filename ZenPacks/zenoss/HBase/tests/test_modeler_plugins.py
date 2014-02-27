@@ -49,7 +49,6 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         from ZenPacks.zenoss.HBase.HBaseRegionServer import HBaseRegionServer
         HBaseRegionServer.clear_events = lambda x: 'test'
 
-
     def _loadZenossData(self):
         if hasattr(self, '_loaded'):
             return
@@ -106,4 +105,3 @@ def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(HBaseModelerPluginsTestCase))
     return suite
-
