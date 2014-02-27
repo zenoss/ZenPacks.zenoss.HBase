@@ -47,12 +47,6 @@ class HBaseRegionServer(HBaseComponent):
     def device(self):
         return self.hbase_host()
 
-    def getIconPath(self):
-        '''
-        Return the path to an icon for this component.
-        '''
-        return '/zport/dmd/img/icons/server.png'
-
 
 class IHBaseRegionServerInfo(IComponentInfo):
     '''
