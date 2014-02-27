@@ -142,14 +142,15 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         This method return a data structure with zero or more events, values
         and maps.  result - is what returned from collect.
         """
-        for ds in config.datasources:
-            result['events'].insert(0, {
-                'component': ds.component,
-                'summary': 'Monitoring ok',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Clear,
-            })
+        if not result['events']:
+            for ds in config.datasources:
+                result['events'].append({
+                    'component': ds.component,
+                    'summary': 'Monitoring ok',
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Clear,
+                })
         return result
 
     def onError(self, result, config):
