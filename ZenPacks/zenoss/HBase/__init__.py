@@ -108,10 +108,9 @@ def getClearEvents(self):
     """
     Attempt to clear all non-existing component events.
 
-    The modeler plugin calls setDiscoverGuests which will cause
+    The modeler plugin calls setClearEvents which will cause
     ApplyDataMap to call this getter method first to validate that
-    the setter even needs to be run. For this reason, this method
-    must actually perform the discovery logic.
+    the setter even needs to be run.
     """
     self.clear_events()
     return True
@@ -120,7 +119,7 @@ def getClearEvents(self):
 def setClearEvents(self, value):
     """
     This method should typically never be called because the
-    getDiscoverGuests method will always return the same value that
+    getClearEvents method will always return the same value that
     the modeler plugin sets.
     """
     self.clear_events()
@@ -129,7 +128,7 @@ def setClearEvents(self, value):
 def clear_events(self):
     """
     Discover and clear all events, related to components which had
-    benn deleted.
+    been deleted.
     """
     zep = getFacade('zep')
     zep_filter = zep.createEventFilter(
