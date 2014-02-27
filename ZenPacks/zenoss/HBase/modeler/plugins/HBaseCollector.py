@@ -112,6 +112,11 @@ class HBaseCollector(PythonPlugin):
             modname=MODULE_NAME['HBaseRegionServer'],
             objmaps=server_oms))
 
+        # Clear non-existing component events.
+        maps['device'].append(ObjectMap({
+            'getClearEvents': True
+        }))
+
         log.info(
             'Modeler %s finished processing data for device %s',
             self.name(), device.id
