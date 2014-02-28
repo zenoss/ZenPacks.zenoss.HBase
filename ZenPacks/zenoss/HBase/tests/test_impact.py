@@ -112,3 +112,12 @@ class TestImpact(BaseTestCase):
         impacts, impacted_by = impacts_for(region)
 
         self.assertTrue('region_server0' in impacts)
+
+    @require_impact
+    def test_HBaseTableImpacts(self):
+        table = self.device().getObjByPath(
+            'hbase_tables/table0')
+
+        impacts, impacted_by = impacts_for(table)
+
+        self.assertTrue('hbase_test_device' in impacts)
