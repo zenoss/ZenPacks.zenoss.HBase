@@ -1,0 +1,155 @@
+{{ZenPack
+|Summary=This ZenPack provides status and performance monitoring of HBase.
+|Organization=Zenoss, Inc.
+|ZenPack name=ZenPacks.zenoss.HBase
+|Source URI=
+|Releases={{Release
+|Version=
+|Tag=
+|Release date=
+|Compatible with=Zenoss Core 4.2.x, Zenoss Resource Manager 4.1.x, Zenoss Resource Manager 4.2.x
+|Requires=PythonCollector
+}}
+|Devices=
+|Applications={{Application
+|Product Name=HBase
+}}
+|Integrations=
+|DataAudits=
+|Binaries=
+|Flavor=
+}}
+
+The <span class="zenpack">ZenPacks.zenoss.HBase</span> ZenPack monitors HBase 
+clusters through ''Apache HBase REST Interface'' and Python 
+<samp class="ph codeph">twisted.web.client</samp> asynchronous framework.
+
+__TOC__
+
+The features added by this ZenPack can be summarized as follows.
+They are each detailed further below.
+
+* Discovery and periodic remodeling of relevant components. 
+* Performance monitoring. 
+* Event monitoring.
+* Optional service impact with addition of Zenoss Service Dynamics product. 
+
+=== Discovery ===
+
+The following values are discovered through zProperties you provide:
+
+; Region Servers
+: ''Attributes'': Name (DomainName:port), Start Code
+: ''Collections'': Regions
+
+; Regions
+: ''Attributes'': Table, Start Key, Region ID
+
+; Tables
+: ''Attributes'': Compaction, Enabled
+
+=== Performance Monitoring ===
+
+The following metrics will be collected and graphed every 5 minutes by default:
+
+; HBase Cluster Metrics
+: ''Region Server Statistics'': The number of dead, live and overall number of Region Servers
+: ''Performance'': Average load, Requests
+
+; Region Servers
+: ''Region Statistics'': Number of Regions, Storefiles and Stores
+: ''Memory Usage'': Heap Memory Size (MB)
+: ''Storage Statistics'': Memstore Size (MB), Storefile Index Size (MB), Storefile Size (MB)
+: ''Requests'': Read, Write
+
+; Regions
+: ''Storage Statistics'': Memstore Size (MB), Storefile Index Size (MB), Storefile Size (MB), Storefiles, Stores
+: ''Requests'': Read, Write
+
+=== Event monitoring ===
+
+The following events will be triggered with respect to the monitored metrics:
+
+;HBase Cluster
+: ''Critical'': Connection refused/Credentials not valid.
+: ''Critical'': The percentage of dead servers exceeds 50%.
+: ''Warning'': The percentage of dead servers exceeds 10%.
+
+; Region Servers
+: ''Error'': The server is dead.
+: ''Warning'': The Memstore Size is nearing or exceeding its global.memstore.size (defaults to 40% of maxHeapSize).
+: ''Info'': One or more regionservers have been added/removed.
+
+; Regions
+: ''Warning'': The Memstore Size is nearing or exceeding its flush size (128MB by default).
+: ''Warning'': The Storefile Size is nearing or exceeding the recommended maximum size (10GB by default).
+
+; Tables
+: ''Error'': The table was disabled or dropped.
+
+=== Service Impact ===
+When combined with the Zenoss Service Dynamics product, this ZenPack adds 
+built-in service impact capability for HBase. The following service impact 
+relationships are automatically added. These will be included in any services 
+containing one or more of the explicitly mentioned entities.
+;Service Impact Relationships
+* Region Server or Table failure affects related device.
+* Region failure affects related Region Server.
+
+== Usage ==
+
+Use the following steps to start monitoring HBase:
+# Select Infrastructure from the navigation bar.
+# Click the device name in the device list. The device overview page appears.
+# Select ''Configuration Properties'' from the left panel.
+# Set the ''zHBase'' property to 'true' to enable monitoring.
+# Set the ''zHBasePassword'' and ''zHBaseUsername'' if you have access authentication enabled on your HBase master.
+# Optionally set the ''zHBaseProt'' if you have your HBase rest daemon started on any other port than 8080.
+# Navigate to the ''Modeler plugins'' page of the device containing your HBase server, add the ''HBaseCollector'' and ''HBaseTableCollector'' modeler plugins.
+# Select ''Bind Templates'' from the Action menu. The ''Bind Templates'' dialog appears.
+# Add the ''HBaseCluster'' template to the list of selected templates, and then click ''Submit''. The HBaseCluster template is added to the list of monitoring templates. 
+
+=== Authorize User Access to Apache HBase ===
+
+Use the [http://hbase.apache.org/book/hbase.secure.simpleconfiguration.html Secure Apache HBase] guide 
+to set up Apache HBase and clients for simple user access to HBase resources.
+
+== Prerequisites ==
+
+This ZenPack uses the ''Apache HBase REST Interface'' for performance monitoring,
+therefore the rest daemon should be started and running on 
+the port specified in ''zHBaseProt'' zProperty.
+
+You can start the rest daemon by executing the following command:
+
+<code>bin/hbase-daemon.sh start rest</code>
+
+Please make sure that the default port for the HBase Master web UI (60010) 
+was not changed in the ''hbase-default.xml'' and the UI instance is running, 
+as it is used for tables state monitoring.
+
+== Troubleshooting ==
+
+Please refer the the Zenoss Service Dynamics documentation if you run into 
+any of the following problems:
+
+* ZenPack will not install
+* Adding a device fails
+* Don't understand how to add a device
+* Don't understand how to model a device
+
+If you cannot find the answer in the documentation, then Resource Manager (Service Dynamics) 
+users should contact [https://support.zenoss.com Zenoss Customer Support]. 
+Core users can use the #zenoss IRC channel or the community.zenoss.org forums.
+
+== Daemons ==
+
+{| class="wikitable"
+!width="50%"|Type
+!width="50%"|Name
+|-
+|Performance Collector
+|zenpython
+|}
+
+{{ZenPackFooter}}
