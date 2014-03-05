@@ -34,7 +34,7 @@ class HBaseTableCollector(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + (
         'zHBaseUsername',
-        'zHBasePasword',
+        'zHBasePassword',
         'zHBasePort'
         )
 
@@ -43,7 +43,7 @@ class HBaseTableCollector(PythonPlugin):
 
         url = hbase_rest_url(
             user=device.zHBaseUsername,
-            passwd=device.zHBasePasword,
+            passwd=device.zHBasePassword,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/'

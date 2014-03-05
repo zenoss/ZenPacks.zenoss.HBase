@@ -30,7 +30,7 @@ unused(Globals)
 # Categorize zProperties.
 setzPropertyCategory('zHBase', 'HBase')
 setzPropertyCategory('zHBaseUsername', 'HBase')
-setzPropertyCategory('zHBasePasword', 'HBase')
+setzPropertyCategory('zHBasePassword', 'HBase')
 setzPropertyCategory('zHBasePort', 'HBase')
 
 # Modules containing model classes. Used by zenchkschema to validate
@@ -163,7 +163,7 @@ class ZenPack(ZenPackBase):
     packZProperties = [
         ('zHBase', 'false', 'bool'),
         ('zHBaseUsername', '', 'string'),
-        ('zHBasePasword', '', 'password'),
+        ('zHBasePassword', '', 'password'),
         ('zHBasePort', '8080', 'string'),
     ]
 

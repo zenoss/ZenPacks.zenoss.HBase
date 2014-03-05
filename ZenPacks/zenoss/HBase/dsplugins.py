@@ -40,7 +40,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
     proxy_attributes = (
         'zHBase',
         'zHBaseUsername',
-        'zHBasePasword',
+        'zHBasePassword',
         'zHBasePort',
         'regionserver_ids'
     )
@@ -108,7 +108,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         # Check the connection and collect data.
         url = hbase_rest_url(
             user=ds0.zHBaseUsername,
-            passwd=ds0.zHBasePasword,
+            passwd=ds0.zHBasePassword,
             port=ds0.zHBasePort,
             host=ds0.manageIp,
             endpoint=self.endpoint
@@ -293,7 +293,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
             self.component = ds.component
             url = hbase_rest_url(
                 user=ds.zHBaseUsername,
-                passwd=ds.zHBasePasword,
+                passwd=ds.zHBasePassword,
                 port='60010',
                 host=ds.manageIp,
                 endpoint=self.endpoint.format(self.component)
