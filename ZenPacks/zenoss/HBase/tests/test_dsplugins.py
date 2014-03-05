@@ -51,7 +51,11 @@ class TestHBaseBasePlugin(BaseTestCase):
         config = ds = Mock()
         ds.component = sentinel.component
         config.datasources = [ds]
-        # Test clear events if no events came in data.
+        # Test not clear events if no data in values.
+        self.assertEquals(data, self.plugin.onSuccess(data, config))
+
+        # Test clear events if there is data in values.
+        data['values'][sentinel.component] = 'test'
         self.assertIn({
             'severity': 0,
             'eventClass': '/Status',
@@ -59,11 +63,6 @@ class TestHBaseBasePlugin(BaseTestCase):
             'eventKey': 'hbase_monitoring_error',
             'summary': 'Monitoring ok'
         }, self.plugin.onSuccess(data, config).get('events'))
-
-        data['events'] = 'test'
-        # Test not clear events if there are events in data.
-        self.assertIn(
-            'test', self.plugin.onSuccess(data, config).get('events'))
 
     def test_onError(self):
         self.plugin.component = sentinel.component
@@ -112,7 +111,7 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
         self.assertIn({
             'eventClass': '/Status',
             'component': 'localhost_11111',
-            'eventKey': 'hbase_monitoring_error',
+            'eventKey': 'hbase_regionserver_monitoring_error',
             'severity': 4,
             'summary': "This region server is dead."
         }, result)
@@ -129,6 +128,16 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
             'eventClass': '/Status',
             'severity': 2,
             'summary': "Region server 'test' is removed."
+        }, self.plugin.get_events(data, ds))
+
+        # Check clear event for dead server.
+        self.plugin.component = 'localhost_44451'
+        self.assertIn({
+            'eventClass': '/Status',
+            'component': 'localhost_44451',
+            'eventKey': 'hbase_regionserver_monitoring_error',
+            'severity': 0,
+            'summary': "This region server is dead."
         }, self.plugin.get_events(data, ds))
 
 
@@ -164,6 +173,26 @@ class TestHBaseTablePlugin(BaseTestCase):
         self.d = dc.createInstance('hbase.testDevice')
         self.plugin = dsplugins.HBaseTablePlugin()
 
+    def test_onSuccess(self):
+        data = self.plugin.new_data()
+        config = ds = Mock()
+        ds.component = sentinel.component
+        config.datasources = [ds]
+        # Test not clear events if no data in values.
+        self.assertEquals(data, self.plugin.onSuccess(data, config))
+
+        # Test clear events if there is data in maps.
+        om = Mock()
+        om.compname = 'hbase_tables/test'
+        data['maps'] = [om]
+        self.assertIn({
+            'severity': 0,
+            'eventClass': '/Status',
+            'component': 'test',
+            'eventKey': 'hbase_monitoring_error',
+            'summary': 'Monitoring ok'
+        }, self.plugin.onSuccess(data, config).get('events'))
+
     def test_get_events(self):
         data = load_data('HBaseTableStatus.txt')
         self.plugin.component = sentinel.component
@@ -172,8 +201,20 @@ class TestHBaseTablePlugin(BaseTestCase):
             'severity': 4,
             'eventClass': '/Status',
             'component': sentinel.component,
-            'eventKey': 'hbase_monitoring_error',
+            'eventKey': 'hbase_table_monitoring_error',
             'summary': "The table 'sentinel.component' is disabled."
+        }, result)
+
+    def test_get_events_clear(self):
+        data = load_data('HBaseTableEnabledStatus.txt')
+        self.plugin.component = sentinel.component
+        result = self.plugin.get_events(data, sentinel.ds)
+        self.assertIn({
+            'severity': 0,
+            'eventClass': '/Status',
+            'component': sentinel.component,
+            'eventKey': 'hbase_table_monitoring_error',
+            'summary': "Monitoring ok"
         }, result)
 
     def test_add_maps(self):
