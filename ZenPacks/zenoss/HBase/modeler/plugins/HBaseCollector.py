@@ -35,7 +35,7 @@ class HBaseCollector(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + (
         'zHBaseUsername',
-        'zHBasePasword',
+        'zHBasePassword',
         'zHBasePort'
         )
 
@@ -44,7 +44,7 @@ class HBaseCollector(PythonPlugin):
 
         url = hbase_rest_url(
             user=device.zHBaseUsername,
-            passwd=device.zHBasePasword,
+            passwd=device.zHBasePassword,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/status/cluster'

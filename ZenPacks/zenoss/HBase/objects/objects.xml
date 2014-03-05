@@ -252,7 +252,7 @@
           500
         </property>
         <property id="units" mode="w" type="string">
-          %
+          Percent
         </property>
         <property id="log" mode="w" type="boolean">
           False
@@ -287,7 +287,7 @@
               False
             </property>
             <property id="format" mode="w" type="string">
-              %5.2lf%s
+              %5.2lf%%
             </property>
             <property id="legend" mode="w" type="string">
               Average load
