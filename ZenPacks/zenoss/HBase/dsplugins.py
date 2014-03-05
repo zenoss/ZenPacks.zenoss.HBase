@@ -103,7 +103,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         res = ''
 
         ds0 = config.datasources[0]
-        if ds0.zHBase == "false":
+        if not ds0.zHBase:
             defer.returnValue(results)
         # Check the connection and collect data.
         url = hbase_rest_url(
@@ -287,7 +287,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
         """
         results = self.new_data()
         for ds in config.datasources:
-            if ds.zHBase == "false":
+            if not ds.zHBase:
                 continue
 
             self.component = ds.component

@@ -161,7 +161,7 @@ class ZenPack(ZenPackBase):
     """
 
     packZProperties = [
-        ('zHBase', 'false', 'bool'),
+        ('zHBase', False, 'boolean'),
         ('zHBaseUsername', '', 'string'),
         ('zHBasePassword', '', 'password'),
         ('zHBasePort', '8080', 'string'),
