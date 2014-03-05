@@ -100,34 +100,25 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         below.
         """
         results = self.new_data()
+        res = ''
 
         ds0 = config.datasources[0]
         if ds0.zHBase == "false":
             defer.returnValue(results)
         # Check the connection and collect data.
+        url = hbase_rest_url(
+            user=ds0.zHBaseUsername,
+            passwd=ds0.zHBasePasword,
+            port=ds0.zHBasePort,
+            host=ds0.manageIp,
+            endpoint=self.endpoint
+        )
         try:
-            url = hbase_rest_url(
-                user=ds0.zHBaseUsername,
-                passwd=ds0.zHBasePasword,
-                port=ds0.zHBasePort,
-                host=ds0.manageIp,
-                endpoint=self.endpoint
-            )
             res = yield getPage(url, headers={'Accept': 'application/json'})
             if not res:
                 raise HBaseException('No monitoring data.')
-
-            # Process data if was returned.
-            for ds in config.datasources:
-                self.component = ds.component
-                results['values'][self.component] = self.process(res)
-                results['events'].extend(self.get_events(res, ds))
-                maps = self.add_maps(res, ds)
-                if maps:
-                    results['maps'].extend(maps)
         except (Exception, HBaseException), e:
             # Send connection error event for each component.
-            # Could be done only for device (in that case remove loop).
             for ds in config.datasources:
                 results['events'].append({
                     'component': ds.component,
@@ -136,6 +127,15 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Critical,
                 })
+            defer.returnValue(results)
+        # Process returned data.
+        for ds in config.datasources:
+            self.component = ds.component
+            results['values'][self.component] = self.process(res)
+            results['events'].extend(self.get_events(res, ds))
+            maps = self.add_maps(res, ds)
+            if maps:
+                results['maps'].extend(maps)
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -143,15 +143,14 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         This method return a data structure with zero or more events, values
         and maps.  result - is what returned from collect.
         """
-        if not result['events']:
-            for ds in config.datasources:
-                result['events'].append({
-                    'component': ds.component,
-                    'summary': 'Monitoring ok',
-                    'eventKey': 'hbase_monitoring_error',
-                    'eventClass': '/Status',
-                    'severity': ZenEventClasses.Clear,
-                })
+        for component in result['values'].keys():
+            result['events'].append({
+                'component': component,
+                'summary': 'Monitoring ok',
+                'eventKey': 'hbase_monitoring_error',
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Clear,
+            })
         return result
 
     def onError(self, result, config):
@@ -204,14 +203,16 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         events = []
         # Check for dead servers.
         dead_nodes = [prepId(node) for node in data["DeadNodes"]]
-        if self.component in dead_nodes:
-            events.append({
-                'component': self.component,
-                'summary': 'This region server is dead.',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Error,
-            })
+        # Send error or clear event.
+        severity = ((self.component in dead_nodes) and ZenEventClasses.Error
+                    or ZenEventClasses.Clear)
+        events.append({
+            'component': self.component,
+            'summary': 'This region server is dead.',
+            'eventKey': 'hbase_regionserver_monitoring_error',
+            'eventClass': '/Status',
+            'severity': severity
+        })
         # Check for removed/added servers.
         live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
         all_nodes = dead_nodes + live_nodes
@@ -235,7 +236,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
 
     def add_maps(self, result, ds):
         """
-        Parses resulting data into datapoints
+        Parses resulting data into RelationshipMaps.
         """
         ds.id = ds.component
         return HBaseCollector().process(ds, result, log)
@@ -299,21 +300,20 @@ class HBaseTablePlugin(HBaseBasePlugin):
             )
 
             try:
-                res = yield getPage(
-                    url, headers={'Accept': 'text/html'}
-                )
-
+                # Check connection and collect data.
+                res = yield getPage(url, headers={'Accept': 'text/html'})
                 if not res:
                     raise HBaseException('No monitoring data.')
+                # Process data if was returned.
                 results['events'].extend(self.get_events(res, ds))
                 maps = self.add_maps(res, ds)
                 if maps:
                     results['maps'].extend(maps)
-
             except (Exception, HBaseException), e:
                 summary = str(e)
                 if '500' in summary:
-                    summary = "The table is broken or does not exist."
+                    summary = "The table '{0}' is broken or does not " \
+                        "exist.".format(ds.component)
                 results['events'].append({
                     'component': ds.component,
                     'summary': summary,
@@ -322,6 +322,20 @@ class HBaseTablePlugin(HBaseBasePlugin):
                     'severity': ZenEventClasses.Critical,
                 })
         defer.returnValue(results)
+
+    def onSuccess(self, result, config):
+        # Clear events for those components, who have maps.
+        clear_components = [om.compname.replace('hbase_tables/', '')
+                            for om in result['maps']]
+        for component in clear_components:
+            result['events'].append({
+                'component': component,
+                'summary': 'Monitoring ok',
+                'eventKey': 'hbase_monitoring_error',
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Clear,
+            })
+        return result
 
     def add_maps(self, result, ds):
         return [ObjectMap({
@@ -333,20 +347,21 @@ class HBaseTablePlugin(HBaseBasePlugin):
 
     def get_events(self, result, ds):
         enabled = _table_enabled(result)
-        summary = ''
+        summary = 'Monitoring ok'
         if enabled != 'true':
             summary = "The table '{0}' is disabled.".format(self.component)
         if not enabled:
             summary = "The table '{0}' is dropped.".format(self.component)
-        if summary:
-            return [{
-                'component': self.component,
-                'summary': summary,
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Error,
-            }]
-        return []
+        # Send error or clear event.
+        severity = ((summary != 'Monitoring ok') and ZenEventClasses.Error
+                    or ZenEventClasses.Clear)
+        return [{
+            'component': self.component,
+            'summary': summary,
+            'eventKey': 'hbase_table_monitoring_error',
+            'eventClass': '/Status',
+            'severity': severity,
+        }]
 
 
 def _sum_perf_metrics(res, region):
