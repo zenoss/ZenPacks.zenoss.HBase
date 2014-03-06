@@ -21,7 +21,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, dead_node_name
 
 
 class HBaseCollector(PythonPlugin):
@@ -135,10 +135,12 @@ class HBaseCollector(PythonPlugin):
                 'is_alive': "Up"
             })
         else:
+            # For dead servers the name is returned as 'domain,port,startcode'
+            title, start_code = dead_node_name(node)
             return ObjectMap({
-                'id': prepId(node),
-                'title': node,
-                'start_code': node,
+                'id': prepId(title),
+                'title': title,
+                'start_code': start_code,
                 'is_alive': "Down"
             })
 

@@ -26,6 +26,28 @@ class TestHBaseBasePlugin(BaseTestCase):
         self.d = dc.createInstance('hbase.testDevice')
         self.plugin = dsplugins.HBaseBasePlugin()
 
+    def test_get_events(self):
+        data = load_data('HBaseCollector.json')
+        self.plugin.component = 'localhost_11111'
+        ds = Mock()
+        ds.component = sentinel.component
+        ds.regionserver_ids = []
+        result = self.plugin.get_events(data, ds)
+        # Check event for added server.
+        self.assertIn({
+            'eventClass': '/Status',
+            'component': 'localhost_44451',
+            'severity': 2,
+            'summary': "Region server 'localhost:44451' is added."
+        }, result)
+        # Check event for removed server.
+        ds.regionserver_ids = ['localhost_11111', 'test']
+        self.assertIn({
+            'eventClass': '/Status',
+            'severity': 2,
+            'summary': "Region server 'test' is removed."
+        }, self.plugin.get_events(data, ds))
+
     def test_process(self):
         data = load_data('HBaseCollector.json')
         result = self.plugin.process(data)
@@ -35,16 +57,6 @@ class TestHBaseBasePlugin(BaseTestCase):
         self.assertEquals(result.get('requests_per_second'), (0, 'N'))
         self.assertEquals(result.get('dead_servers'), (1, 'N'))
         self.assertEquals(result.get('regions'), (2, 'N'))
-
-    def test_add_maps(self):
-        data = load_data('HBaseCollector.json')
-        result = self.plugin.add_maps(data, sentinel.ds)
-        self.assertEquals(result, [])
-
-    def test_get_events(self):
-        data = load_data('HBaseCollector.json')
-        result = self.plugin.get_events(data, sentinel.ds)
-        self.assertEquals(result, [])
 
     def test_onSuccess(self):
         data = self.plugin.new_data()
@@ -113,23 +125,8 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
             'component': 'localhost_11111',
             'eventKey': 'hbase_regionserver_monitoring_error',
             'severity': 4,
-            'summary': "This region server is dead."
+            'summary': "Region server 'localhost:11111' is dead."
         }, result)
-        # Check event for added server.
-        self.assertIn({
-            'eventClass': '/Status',
-            'component': 'localhost_44451',
-            'severity': 2,
-            'summary': "Region server 'localhost_44451' is added."
-        }, result)
-        # Check event for removed server.
-        ds.regionserver_ids = ['localhost_11111', 'test']
-        self.assertIn({
-            'eventClass': '/Status',
-            'severity': 2,
-            'summary': "Region server 'test' is removed."
-        }, self.plugin.get_events(data, ds))
-
         # Check clear event for dead server.
         self.plugin.component = 'localhost_44451'
         self.assertIn({
@@ -137,8 +134,13 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
             'component': 'localhost_44451',
             'eventKey': 'hbase_regionserver_monitoring_error',
             'severity': 0,
-            'summary': "This region server is dead."
+            'summary': "Region server 'localhost:44451' is dead."
         }, self.plugin.get_events(data, ds))
+
+    def test_add_maps(self):
+        data = load_data('HBaseCollector.json')
+        result = self.plugin.add_maps(data, sentinel.ds)
+        self.assertEquals(result, [])
 
 
 class TestHBaseRegionPlugin(BaseTestCase):
