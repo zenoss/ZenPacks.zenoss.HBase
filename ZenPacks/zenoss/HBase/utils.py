@@ -127,3 +127,16 @@ def hbase_rest_url(user, passwd, port, host, endpoint):
         url += ":" + passwd + "@"
     url += host + ':' + port + endpoint
     return url
+
+
+def dead_node_name(node):
+    """
+    Parses the dead server name in format of 'domain,port,startcode'
+    into title and start code.
+    """
+    try:
+        name, port, start_code = node.split(',')
+        title = '{0}:{1}'.format(name, port)
+        return title, start_code
+    except:
+        return node, node

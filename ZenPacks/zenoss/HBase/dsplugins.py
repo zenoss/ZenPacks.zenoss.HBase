@@ -21,7 +21,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap
 from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, dead_node_name
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
@@ -78,7 +78,9 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         @type datasource: instance of PythonDataSourceConfig
         @return: ObjectMap|RelationshipMap
         """
-        return []
+        # The function must run only once, as it remodels all region servers.
+        ds.id = ds.device
+        return HBaseCollector().process(ds, res, log)
 
     def get_events(self, result, ds):
         """
@@ -90,7 +92,32 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         @type ds: instance of PythonDataSourceConfig
         @return: list of events
         """
-        return []
+        data = json.loads(result)
+        events = []
+        # Check for removed/added servers.
+        dead_nodes = [prepId(dead_node_name(node)[0]) for node
+                      in data["DeadNodes"]]
+        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
+        all_nodes = dead_nodes + live_nodes
+
+        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
+        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
+        for server in added:
+            events.append({
+                'component': server,
+                'summary': "Region server '{0}' is added.".format(
+                    server.replace('_', ':')),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        for server in removed:
+            events.append({
+                'summary': "Region server '{0}' is removed.".format(
+                    server.replace('_', ':')),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        return events
 
     @defer.inlineCallbacks
     def collect(self, config):
@@ -132,10 +159,10 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         for ds in config.datasources:
             self.component = ds.component
             results['values'][self.component] = self.process(res)
-            results['events'].extend(self.get_events(res, ds))
             maps = self.add_maps(res, ds)
             if maps:
                 results['maps'].extend(maps)
+            results['events'].extend(self.get_events(res, ds))
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -200,46 +227,23 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
 
     def get_events(self, result, ds):
         data = json.loads(result)
-        events = []
         # Check for dead servers.
-        dead_nodes = [prepId(node) for node in data["DeadNodes"]]
+        dead_nodes = [prepId(dead_node_name(node)[0]) for node
+                      in data["DeadNodes"]]
         # Send error or clear event.
         severity = ((self.component in dead_nodes) and ZenEventClasses.Error
                     or ZenEventClasses.Clear)
-        events.append({
+        return [{
             'component': self.component,
-            'summary': 'This region server is dead.',
+            'summary': "Region server '{0}' is dead.".format(
+                self.component.replace('_', ':')),
             'eventKey': 'hbase_regionserver_monitoring_error',
             'eventClass': '/Status',
             'severity': severity
-        })
-        # Check for removed/added servers.
-        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
-        all_nodes = dead_nodes + live_nodes
+        }]
 
-        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
-        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
-        for server in added:
-            events.append({
-                'component': server,
-                'summary': "Region server '{0}' is added.".format(server),
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Info,
-            })
-        for server in removed:
-            events.append({
-                'summary': "Region server '{0}' is removed.".format(server),
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Info,
-            })
-        return events
-
-    def add_maps(self, result, ds):
-        """
-        Parses resulting data into RelationshipMaps.
-        """
-        ds.id = ds.component
-        return HBaseCollector().process(ds, result, log)
+    def add_maps(self, res, ds):
+        return []
 
 
 class HBaseRegionPlugin(HBaseBasePlugin):
@@ -273,6 +277,12 @@ class HBaseRegionPlugin(HBaseBasePlugin):
                         return _sum_perf_metrics(res, region)
         return res
 
+    def add_maps(self, res, ds):
+        return []
+
+    def get_events(self, result, ds):
+        return []
+
 
 class HBaseTablePlugin(HBaseBasePlugin):
     """
@@ -305,10 +315,10 @@ class HBaseTablePlugin(HBaseBasePlugin):
                 if not res:
                     raise HBaseException('No monitoring data.')
                 # Process data if was returned.
-                results['events'].extend(self.get_events(res, ds))
                 maps = self.add_maps(res, ds)
                 if maps:
                     results['maps'].extend(maps)
+                results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
                 summary = str(e)
                 if '500' in summary:
@@ -368,24 +378,24 @@ def _sum_perf_metrics(res, region):
     """
     Util function for summing region metrics
     """
-    res['read_requests'] = (res['read_requests'][0] + \
-        region['readRequestsCount'], 'N')
-    res['write_requests'] = (res['write_requests'][0] + \
-        region['writeRequestsCount'], 'N')
-    res['number_of_stores'] = (res['number_of_stores'][0] + \
-        region['stores'], 'N')
-    res['number_of_store_files'] = (res['number_of_store_files'][0] + \
-        region['storefiles'], 'N')
-    res['store_file_size_mb'] = (res['store_file_size_mb'][0] + \
-        region['storefileSizeMB'], 'N')
-    res['store_file_index_size_mb'] = (res['store_file_index_size_mb'][0] + \
-        region['storefileIndexSizeMB'], 'N')
-    res['memstore_size_mb'] = (res['memstore_size_mb'][0] + \
-        region['memstoreSizeMB'], 'N')
-    res['current_compacted_kv'] = (res['current_compacted_kv'][0] + \
-        region['currentCompactedKVs'], 'N')
-    res['total_compacting_kv'] = (res['total_compacting_kv'][0] + \
-        region['totalCompactingKVs'], 'N')
+    res['read_requests'] = (res['read_requests'][0] +
+                            region['readRequestsCount'], 'N')
+    res['write_requests'] = (res['write_requests'][0] +
+                             region['writeRequestsCount'], 'N')
+    res['number_of_stores'] = (res['number_of_stores'][0] +
+                               region['stores'], 'N')
+    res['number_of_store_files'] = (res['number_of_store_files'][0] +
+                                    region['storefiles'], 'N')
+    res['store_file_size_mb'] = (res['store_file_size_mb'][0] +
+                                 region['storefileSizeMB'], 'N')
+    res['store_file_index_size_mb'] = (res['store_file_index_size_mb'][0] +
+                                       region['storefileIndexSizeMB'], 'N')
+    res['memstore_size_mb'] = (res['memstore_size_mb'][0] +
+                               region['memstoreSizeMB'], 'N')
+    res['current_compacted_kv'] = (res['current_compacted_kv'][0] +
+                                   region['currentCompactedKVs'], 'N')
+    res['total_compacting_kv'] = (res['total_compacting_kv'][0] +
+                                  region['totalCompactingKVs'], 'N')
     return res
 
 
