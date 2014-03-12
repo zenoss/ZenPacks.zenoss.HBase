@@ -21,7 +21,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap
 from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, dead_node_name
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers, dead_node_name
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
@@ -134,14 +134,17 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             defer.returnValue(results)
         # Check the connection and collect data.
         url = hbase_rest_url(
-            user=ds0.zHBaseUsername,
-            passwd=ds0.zHBasePassword,
             port=ds0.zHBasePort,
             host=ds0.manageIp,
             endpoint=self.endpoint
         )
+        headers = hbase_headers(
+            accept='application/json',
+            username=ds0.zHBaseUsername,
+            passwd=ds0.zHBasePassword
+        )
         try:
-            res = yield getPage(url, headers={'Accept': 'application/json'})
+            res = yield getPage(url, headers=headers)
             if not res:
                 raise HBaseException('No monitoring data.')
         except (Exception, HBaseException), e:
@@ -302,22 +305,22 @@ class HBaseTablePlugin(HBaseBasePlugin):
 
             self.component = ds.component
             url = hbase_rest_url(
-                user=ds.zHBaseUsername,
-                passwd=ds.zHBasePassword,
                 port='60010',
                 host=ds.manageIp,
                 endpoint=self.endpoint.format(self.component)
             )
-
+            headers = hbase_headers(
+                accept='text/html',
+                username=ds.zHBaseUsername,
+                passwd=ds.zHBasePassword
+            )
             try:
                 # Check connection and collect data.
-                res = yield getPage(url, headers={'Accept': 'text/html'})
+                res = yield getPage(url, headers=headers)
                 if not res:
                     raise HBaseException('No monitoring data.')
                 # Process data if was returned.
-                maps = self.add_maps(res, ds)
-                if maps:
-                    results['maps'].extend(maps)
+                results['maps'].extend(self.add_maps(res, ds))
                 results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
                 summary = str(e)

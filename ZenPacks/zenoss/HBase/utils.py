@@ -10,12 +10,12 @@
 import os
 import json
 
-from Products.AdvancedQuery import Eq, Or
+from base64 import encodestring
+from zope.event import notify
 
+from Products.AdvancedQuery import Eq, Or
 from Products.ZenUtils.Utils import prepId
 from Products.Zuul.interfaces import ICatalogTool
-
-from zope.event import notify
 from Products.Zuul.catalog.events import IndexingEvent
 
 
@@ -116,17 +116,27 @@ def updateToOne(relationship, root, type_, id_):
     return
 
 
-def hbase_rest_url(user, passwd, port, host, endpoint):
+def hbase_rest_url(port, host, endpoint):
     """
-    Constructs URL to access HBase REST interface
+    Constructs URL to access HBase REST interface.
     """
-    url = 'http://'
-    if user:
-        url += user
-    if passwd:
-        url += ":" + passwd + "@"
-    url += host + ':' + port + endpoint
+    url = 'http://{}:{}{}'.format(host, port, endpoint)
     return url
+
+
+def hbase_headers(accept, username, passwd):
+    """
+    Constructs headers to access HBase REST interface.
+    """
+    auth = encodestring(
+        '{}:{}'.format(username, passwd)
+    )
+    authHeader = "Basic " + auth.strip()
+    return {
+        "Accept": accept,
+        "Authorization": authHeader,
+        'Proxy-Authenticate': authHeader
+    }
 
 
 def dead_node_name(node):

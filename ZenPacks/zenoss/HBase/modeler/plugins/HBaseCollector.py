@@ -21,7 +21,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, dead_node_name
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers, dead_node_name
 
 
 class HBaseCollector(PythonPlugin):
@@ -43,14 +43,16 @@ class HBaseCollector(PythonPlugin):
         log.info("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
-            user=device.zHBaseUsername,
-            passwd=device.zHBasePassword,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/status/cluster'
         )
-
-        res = getPage(url, headers={'Accept': 'application/json'})
+        headers = hbase_headers(
+            accept='application/json',
+            username=device.zHBaseUsername,
+            passwd=device.zHBasePassword
+        )
+        res = getPage(url, headers=headers)
         res.addCallbacks(
             lambda r: self.on_success(log, device, r),
             lambda f: self.on_error(log, device, f)
