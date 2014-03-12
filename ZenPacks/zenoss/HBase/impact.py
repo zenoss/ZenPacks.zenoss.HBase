@@ -140,7 +140,7 @@ class HBaseRegionServerRelationsProvider(BaseRelationsProvider):
     impact_relationships = ['hbase_host', 'regions']
 
 
-class HBaseRegionRelationsProvider(BaseRelationsProvider):
+class HBaseHRegionRelationsProvider(BaseRelationsProvider):
     impacted_by_relationships = ['server']
     impact_relationships = ['server']
 

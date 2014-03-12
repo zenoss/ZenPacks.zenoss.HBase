@@ -37,7 +37,7 @@ def test_device(dmd, factor=1):
     """
 
     from ZenPacks.zenoss.HBase.HBaseRegionServer import HBaseRegionServer
-    from ZenPacks.zenoss.HBase.HBaseRegion import HBaseRegion
+    from ZenPacks.zenoss.HBase.HBaseHRegion import HBaseHRegion
     from ZenPacks.zenoss.HBase.HBaseTable import HBaseTable
 
     dc = dmd.Devices.createOrganizer('/Server')
@@ -58,7 +58,7 @@ def test_device(dmd, factor=1):
         for region_id in range(factor):
             region = add_obj(
                 region_server.regions,
-                HBaseRegion('region%s-%s' % (region_server_id, region_id))
+                HBaseHRegion('region%s-%s' % (region_server_id, region_id))
             )
 
     # Tables

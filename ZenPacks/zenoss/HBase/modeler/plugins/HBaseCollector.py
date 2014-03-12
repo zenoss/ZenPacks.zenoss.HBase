@@ -103,7 +103,7 @@ class HBaseCollector(PythonPlugin):
             maps['regions'].append(RelationshipMap(
                 compname='hbase_servers/%s' % node_id,
                 relname='regions',
-                modname=MODULE_NAME['HBaseRegion'],
+                modname=MODULE_NAME['HBaseHRegion'],
                 objmaps=region_oms))
 
         for node in data["DeadNodes"]:

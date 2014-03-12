@@ -249,7 +249,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         return []
 
 
-class HBaseRegionPlugin(HBaseBasePlugin):
+class HBaseHRegionPlugin(HBaseBasePlugin):
     """
     Datasource for HBase Region component.
     """
