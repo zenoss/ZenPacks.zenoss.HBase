@@ -103,16 +103,36 @@ Use the following steps to start monitoring HBase:
 # Click the device name in the device list. The device overview page appears.
 # Select ''Configuration Properties'' from the left panel.
 # Checkmark the ''zHBase'' property checkbox to enable monitoring.
-# Set the ''zHBasePassword'' and ''zHBaseUsername'' if you have access authentication enabled on your HBase master.
+# Set the ''zHBasePassword'' and ''zHBaseUsername'' if you have Basic access authentication configured on your HBase master (otherwise those values will be disregarded).
 # Optionally set the ''zHBaseProt'' if you have your HBase rest daemon started on any other port than 8080.
 # Navigate to the ''Modeler plugins'' page of the device containing your HBase server, add the ''HBaseCollector'' and ''HBaseTableCollector'' modeler plugins.
 # Select ''Bind Templates'' from the Action menu. The ''Bind Templates'' dialog appears.
-# Add the ''HBaseCluster'' template to the list of selected templates, and then click ''Submit''. The HBaseCluster template is added to the list of monitoring templates. 
+# Add the ''HBaseCluster'' template to the list of selected templates, and then click ''Submit''. The HBaseCluster template is added to the list of monitoring templates.
 
-=== Authorize User Access to Apache HBase ===
+----
 
-Use the [http://hbase.apache.org/book/hbase.secure.simpleconfiguration.html Secure Apache HBase] guide 
-to set up Apache HBase and clients for simple user access to HBase resources.
+
+Alternatively you can use zenbatchload to add HBase monitoring servers from the command line. 
+To do this, you must create a text file with hostname, username and password of all the 
+servers you want to add. The devices shuld be added under the the tagget machine device class 
+(e.g. '/Devices/Server/Linux' in the example below).
+
+<syntaxhighlight lang="text">
+/Devices/Server/Linux zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector'], zDeviceTemplates=['HBaseCluster']
+<HOST NAME> zHBase=True, zHBasePort='8080', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>'
+</syntaxhighlight>
+
+You can then load the HBase monitoring servers into Zenoss Core or Resource Manager as devices with the following command.
+<console>
+$ ##i##zenbatchload <filename>
+</console> 
+
+=== Access Authentication to Apache HBase ===
+
+Access authentication may be configured on the target machine in one of the following ways:
+
+# apply appropriate firewall rules, which would permit only an explicit set of IP addresses permission to access HBase;
+# configure proxy authentication.
 
 == Prerequisites ==
 
