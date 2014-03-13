@@ -97,13 +97,12 @@ class HBaseCollector(PythonPlugin):
             # List of regions
             region_oms = []
             for region in node["Region"]:
-                reg_num = node["Region"].index(region) + 1
-                region_oms.append(self._region_om(region, node_id, reg_num))
+                region_oms.append(self._region_om(region, node_id))
 
             maps['regions'].append(RelationshipMap(
                 compname='hbase_servers/%s' % node_id,
                 relname='regions',
-                modname=MODULE_NAME['HBaseRegion'],
+                modname=MODULE_NAME['HBaseHRegion'],
                 objmaps=region_oms))
 
         for node in data["DeadNodes"]:
@@ -146,12 +145,12 @@ class HBaseCollector(PythonPlugin):
                 'is_alive': "Down"
             })
 
-    def _region_om(self, region, node_id, reg_num):
+    def _region_om(self, region, node_id):
         """Builds HBase Region object map"""
         table, start_key, r_id = region['name'].decode('base64').split(',')
         return ObjectMap({
             'id': node_id + NAME_SPLITTER + prepId(region['name']),
-            'title': 'Region {0}'.format(reg_num),
+            'title': region['name'].decode('base64'),
             'table': table,
             'start_key': start_key,
             'region_id': r_id,

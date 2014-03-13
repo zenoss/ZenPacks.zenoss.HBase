@@ -14,7 +14,7 @@ var ZD = Ext.ns('Zenoss.devices');
 
 ZC.registerName('HBaseRegionServer', _t('HBase Region Server'), _t('HBase Region Servers'));
 ZC.registerName('HBaseTable', _t('HBase Table'), _t('HBase Tables'));
-ZC.registerName('HBaseRegion', _t('HBase Region'), _t('HBase Regions'));
+ZC.registerName('HBaseHRegion', _t('HBase Region'), _t('HBase Regions'));
 
 Ext.apply(Zenoss.render, {
     linkFromSubgrid: function(value, metaData, record) {
@@ -153,17 +153,16 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
 
 Ext.reg('HBaseTablePanel', ZC.HBaseTablePanel);
 
-/* HBaseRegion */
-ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
+/* HBaseHRegion */
+ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
     subComponentGridPanel: false,
 
     constructor: function(config) {
         config = Ext.applyIf(config||{}, {
-            autoExpandColumn: 'name',
-            componentType: 'HBaseRegion',
+            autoExpandColumn: 'region_id',
+            componentType: 'HBaseHRegion',
             fields: [
                 {name: 'uid'},
-                {name: 'name'},
                 {name: 'severity'},
                 {name: 'status'},
                 {name: 'usesMonitorAttribute'},
@@ -182,17 +181,6 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 renderer: Zenoss.render.severity,
                 width: 50
             },{
-                id: 'name',
-                dataIndex: 'name',
-                header: _t('Name'),
-                renderer: Zenoss.render.linkFromSubgrid,
-            },{
-                id: 'server',
-                dataIndex: 'server',
-                header: _t('Region Server'),
-                renderer: Zenoss.render.linkFromGrid,
-                width: 170
-            },{
                 id: 'table',
                 dataIndex: 'table',
                 header: _t('Table'),
@@ -206,7 +194,14 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'region_id',
                 dataIndex: 'region_id',
                 header: _t('Region ID'),
-                width: 290
+                width: 290,
+                renderer: Zenoss.render.linkFromSubgrid,
+            },{
+                id: 'server',
+                dataIndex: 'server',
+                header: _t('Region Server'),
+                renderer: Zenoss.render.linkFromGrid,
+                width: 170
             },{
                 id: 'status',
                 dataIndex: 'status',
@@ -227,19 +222,19 @@ ZC.HBaseRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 width: 60
             }]
         });
-        ZC.HBaseRegionPanel.superclass.constructor.call(this, config);
+        ZC.HBaseHRegionPanel.superclass.constructor.call(this, config);
     }
 });
 
-Ext.reg('HBaseRegionPanel', ZC.HBaseRegionPanel);
+Ext.reg('HBaseHRegionPanel', ZC.HBaseHRegionPanel);
 
 
 /* Subcomponent Panels */
-/* HBaseRegion */
+/* HBaseHRegion */
 Zenoss.nav.appendTo('Component', [{
     id: 'regions',
     text: _t('Regions'),
-    xtype: 'HBaseRegionPanel',
+    xtype: 'HBaseHRegionPanel',
     subComponentGridPanel: true,
     filterNav: function(navpanel) {
          switch (navpanel.refOwner.componentType) {
@@ -248,7 +243,7 @@ Zenoss.nav.appendTo('Component', [{
          }
     },
     setContext: function(uid) {
-        ZC.HBaseRegionPanel.superclass.setContext.apply(this, [uid]);
+        ZC.HBaseHRegionPanel.superclass.setContext.apply(this, [uid]);
     }
 }]);
 

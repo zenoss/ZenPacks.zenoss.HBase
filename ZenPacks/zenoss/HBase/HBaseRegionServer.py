@@ -40,7 +40,7 @@ class HBaseRegionServer(HBaseComponent):
         ('hbase_host', ToOne(
             ToManyCont, 'Products.ZenModel.Device.Device', 'hbase_servers')),
         ('regions', ToManyCont(
-            ToOne, MODULE_NAME['HBaseRegion'], 'server')),
+            ToOne, MODULE_NAME['HBaseHRegion'], 'server')),
     )
 
     def device(self):

@@ -77,7 +77,7 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         self.assertEquals(region_server.start_code, 1111)
         self.assertEquals(region_server.is_alive, 'Up')
 
-    def test_HBaseRegion(self):
+    def test_HBaseHRegion(self):
         self._loadZenossData()
         region_server = self.d.hbase_servers._getOb('localhost_44451')
         region = region_server.regions._getOb(

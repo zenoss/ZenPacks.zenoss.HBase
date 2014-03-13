@@ -40,7 +40,7 @@ class HBaseTable(HBaseComponent):
         ('hbase_host', ToOne(
             ToManyCont, 'Products.ZenModel.Device.Device', 'hbase_tables')),
         # ('regions', ToManyCont(
-        #     ToOne, MODULE_NAME['HBaseRegion'], 'table')),
+        #     ToOne, MODULE_NAME['HBaseHRegion'], 'table')),
     )
 
     def device(self):

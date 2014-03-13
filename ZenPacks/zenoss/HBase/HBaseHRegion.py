@@ -25,8 +25,8 @@ from .HBaseComponent import HBaseComponent
 from .utils import updateToMany, updateToOne
 
 
-class HBaseRegion(HBaseComponent):
-    meta_type = portal_type = 'HBaseRegion'
+class HBaseHRegion(HBaseComponent):
+    meta_type = portal_type = 'HBaseHRegion'
 
     table = None
     start_key = None
@@ -41,8 +41,8 @@ class HBaseRegion(HBaseComponent):
     )
 
     _relations = HBaseComponent._relations + (
-        # ('table', ToOne(ToManyCont, MODULE_NAME['HBaseRegion'], 'regions')),
-        ('server', ToOne(ToManyCont, MODULE_NAME['HBaseRegion'], 'regions')),
+        # ('table', ToOne(ToManyCont, MODULE_NAME['HBaseHRegion'], 'regions')),
+        ('server', ToOne(ToManyCont, MODULE_NAME['HBaseHRegion'], 'regions')),
     )
 
     def device(self):
@@ -50,9 +50,9 @@ class HBaseRegion(HBaseComponent):
         return self.server().device()
 
 
-class IHBaseRegionInfo(IComponentInfo):
+class IHBaseHRegionInfo(IComponentInfo):
     '''
-    API Info interface for HBaseRegion.
+    API Info interface for HBaseHRegion.
     '''
 
     device = schema.Entity(title=_t(u'Device'))
@@ -63,11 +63,11 @@ class IHBaseRegionInfo(IComponentInfo):
     region_hash = schema.TextLine(title=_t(u'Hash'))
 
 
-class HBaseRegionInfo(ComponentInfo):
-    ''' API Info adapter factory for HBaseRegion '''
+class HBaseHRegionInfo(ComponentInfo):
+    ''' API Info adapter factory for HBaseHRegion '''
 
-    implements(IHBaseRegionInfo)
-    adapts(HBaseRegion)
+    implements(IHBaseHRegionInfo)
+    adapts(HBaseHRegion)
 
     table = ProxyProperty('table')
     start_key = ProxyProperty('start_key')

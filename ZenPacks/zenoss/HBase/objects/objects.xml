@@ -1000,12 +1000,12 @@
       </object>
     </tomanycont>
   </object>
-  <object class="RRDTemplate" id="/zport/dmd/Devices/rrdTemplates/HBaseRegion" module="Products.ZenModel.RRDTemplate">
+  <object class="RRDTemplate" id="/zport/dmd/Devices/rrdTemplates/HBaseHRegion" module="Products.ZenModel.RRDTemplate">
     <property id="targetPythonClass" mode="w" type="string">
-      ZenPacks.zenoss.HBase.HBaseRegion
+      ZenPacks.zenoss.HBase.HBaseHRegion
     </property>
     <tomanycont id="datasources">
-      <object class="PythonDataSource" id="HBaseRegion" module="ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource">
+      <object class="PythonDataSource" id="HBaseHRegion" module="ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource">
         <property id="sourcetype" mode="w" select_variable="sourcetypes" type="selection">
           Python
         </property>
@@ -1022,7 +1022,7 @@
           300
         </property>
         <property id="plugin_classname" mode="w" type="string">
-          ZenPacks.zenoss.HBase.dsplugins.HBaseRegionPlugin
+          ZenPacks.zenoss.HBase.dsplugins.HBaseHRegionPlugin
         </property>
         <tomanycont id="datapoints">
           <object class="RRDDataPoint" id="read_requests" module="Products.ZenModel.RRDDataPoint">
@@ -1109,7 +1109,7 @@
           3
         </property>
         <property id="dsnames" label="DataPoints" mode="w" type="lines">
-          ['HBaseRegion_memstore_size_mb']
+          ['HBaseHRegion_memstore_size_mb']
         </property>
         <property id="enabled" label="Enabled" mode="w" type="boolean">
           True
@@ -1132,7 +1132,7 @@
           3
         </property>
         <property id="dsnames" label="DataPoints" mode="w" type="lines">
-          ['HBaseRegion_store_file_size_mb']
+          ['HBaseHRegion_store_file_size_mb']
         </property>
         <property id="enabled" label="Enabled" mode="w" type="boolean">
           True
@@ -1201,7 +1201,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_number_of_stores
+              HBaseHRegion_number_of_stores
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1230,7 +1230,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_number_of_store_files
+              HBaseHRegion_number_of_store_files
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1290,7 +1290,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_read_requests
+              HBaseHRegion_read_requests
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1319,7 +1319,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_write_requests
+              HBaseHRegion_write_requests
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1379,7 +1379,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_store_file_size_mb
+              HBaseHRegion_store_file_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1408,7 +1408,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_store_file_index_size_mb
+              HBaseHRegion_store_file_index_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1437,7 +1437,7 @@
               -1
             </property>
             <property id="dpName" mode="w" type="string">
-              HBaseRegion_memstore_size_mb
+              HBaseHRegion_memstore_size_mb
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE

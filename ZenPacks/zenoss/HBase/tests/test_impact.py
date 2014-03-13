@@ -105,7 +105,7 @@ class TestImpact(BaseTestCase):
         self.assertTrue('region0-0' in impacted_by)
 
     @require_impact
-    def test_HBaseRegionImpacts(self):
+    def test_HBaseHRegionImpacts(self):
         region = self.device().getObjByPath(
             'hbase_servers/region_server0/regions/region0-0')
 

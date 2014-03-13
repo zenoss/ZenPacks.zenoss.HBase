@@ -38,7 +38,7 @@ setzPropertyCategory('zHBasePort', 'HBase')
 productNames = (
     'HBaseRegionServer',
     'HBaseTable',
-    'HBaseRegion'
+    'HBaseHRegion'
     )
 
 # Useful to avoid making literal string references to module and class names
@@ -62,7 +62,7 @@ NEW_DEVICE_RELATIONS = (
 NEW_COMPONENT_TYPES = (
     'ZenPacks.zenoss.HBase.HBaseRegionServer.HBaseRegionServer',
     'ZenPacks.zenoss.HBase.HBaseTable.HBaseTable',
-    'ZenPacks.zenoss.HBase.HBaseRegion.HBaseRegion',
+    'ZenPacks.zenoss.HBase.HBaseHRegion.HBaseHRegion',
     )
 
 # Add new relationships to Device if they don't already exist.

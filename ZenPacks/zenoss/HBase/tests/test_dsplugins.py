@@ -143,13 +143,13 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
         self.assertEquals(result, [])
 
 
-class TestHBaseRegionPlugin(BaseTestCase):
+class TestHBaseHRegionPlugin(BaseTestCase):
 
     def afterSetUp(self):
-        super(TestHBaseRegionPlugin, self).afterSetUp()
+        super(TestHBaseHRegionPlugin, self).afterSetUp()
         dc = self.dmd.Devices.createOrganizer('/Server')
         self.d = dc.createInstance('hbase.testDevice')
-        self.plugin = dsplugins.HBaseRegionPlugin()
+        self.plugin = dsplugins.HBaseHRegionPlugin()
 
     def test_process(self):
         data = load_data('HBaseCollector.json')
@@ -235,6 +235,6 @@ def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(TestHBaseBasePlugin))
     suite.addTest(makeSuite(TestHBaseRegionServerPlugin))
-    suite.addTest(makeSuite(TestHBaseRegionPlugin))
+    suite.addTest(makeSuite(TestHBaseHRegionPlugin))
     suite.addTest(makeSuite(TestHBaseTablePlugin))
     return suite

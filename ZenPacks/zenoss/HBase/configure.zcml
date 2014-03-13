@@ -20,9 +20,9 @@
         />
 
     <adapter
-        provides=".HBaseRegion.IHBaseRegionInfo"
-        for=".HBaseRegion.HBaseRegion"
-        factory=".HBaseRegion.HBaseRegionInfo"
+        provides=".HBaseHRegion.IHBaseHRegionInfo"
+        for=".HBaseHRegion.HBaseHRegion"
+        factory=".HBaseHRegion.HBaseHRegionInfo"
         />
 
     <!-- <adapter factory=".datasources.MySqlMonitorDataSource.MySqlMonitorDataSourceInfo"
@@ -42,8 +42,8 @@
 
         <subscriber
             provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
-            for=".HBaseRegion.HBaseRegion"
-            factory=".impact.HBaseRegionRelationsProvider"
+            for=".HBaseHRegion.HBaseHRegion"
+            factory=".impact.HBaseHRegionRelationsProvider"
             />
 
         <subscriber
