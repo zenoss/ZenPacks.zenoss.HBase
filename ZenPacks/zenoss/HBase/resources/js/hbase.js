@@ -159,11 +159,10 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
 
     constructor: function(config) {
         config = Ext.applyIf(config||{}, {
-            autoExpandColumn: 'name',
+            autoExpandColumn: 'region_id',
             componentType: 'HBaseHRegion',
             fields: [
                 {name: 'uid'},
-                {name: 'name'},
                 {name: 'severity'},
                 {name: 'status'},
                 {name: 'usesMonitorAttribute'},
@@ -182,17 +181,6 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 renderer: Zenoss.render.severity,
                 width: 50
             },{
-                id: 'name',
-                dataIndex: 'name',
-                header: _t('Name'),
-                renderer: Zenoss.render.linkFromSubgrid,
-            },{
-                id: 'server',
-                dataIndex: 'server',
-                header: _t('Region Server'),
-                renderer: Zenoss.render.linkFromGrid,
-                width: 170
-            },{
                 id: 'table',
                 dataIndex: 'table',
                 header: _t('Table'),
@@ -206,7 +194,14 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'region_id',
                 dataIndex: 'region_id',
                 header: _t('Region ID'),
-                width: 290
+                width: 290,
+                renderer: Zenoss.render.linkFromSubgrid,
+            },{
+                id: 'server',
+                dataIndex: 'server',
+                header: _t('Region Server'),
+                renderer: Zenoss.render.linkFromGrid,
+                width: 170
             },{
                 id: 'status',
                 dataIndex: 'status',
