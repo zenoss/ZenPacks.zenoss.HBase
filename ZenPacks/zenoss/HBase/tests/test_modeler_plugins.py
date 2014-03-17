@@ -86,7 +86,7 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
 
         self.assertEquals(region.device().id, 'hbase.testDevice')
         self.assertEquals(region.server().id, 'localhost_44451')
-        self.assertEquals(region.title, 'Region 1')
+        self.assertEquals(region.title, '-ROOT-,,0')
         self.assertEquals(region.table, '-ROOT-')
         self.assertEquals(region.start_key, '')
         self.assertEquals(region.region_id, '0')
