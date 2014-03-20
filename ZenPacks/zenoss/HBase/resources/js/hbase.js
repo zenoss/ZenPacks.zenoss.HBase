@@ -1,0 +1,250 @@
+/*****************************************************************************
+ *
+ * Copyright (C) Zenoss, Inc. 2013, all rights reserved.
+ *
+ * This content is made available according to terms specified in
+ * License.zenoss under the directory where your Zenoss product is installed.
+ *
+ ****************************************************************************/
+
+(function(){
+
+var ZC = Ext.ns('Zenoss.component');
+var ZD = Ext.ns('Zenoss.devices');
+
+ZC.registerName('HBaseRegionServer', _t('HBase Region Server'), _t('HBase Region Servers'));
+ZC.registerName('HBaseTable', _t('HBase Table'), _t('HBase Tables'));
+ZC.registerName('HBaseHRegion', _t('HBase Region'), _t('HBase Regions'));
+
+Ext.apply(Zenoss.render, {
+    linkFromSubgrid: function(value, metaData, record) {
+        if (this.subComponentGridPanel) {
+            return Zenoss.render.link(record.data.uid, null, value);
+        } else {
+            return value;
+        }
+    },
+
+    trueFalse: function(value) {
+        var str = value == 'true' ? 'clear' : '';
+        return '<div class="severity-icon-small '+ str +'"><'+'/div>';
+    }
+});
+
+/* HBaseRegionServer */
+ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
+    subComponentGridPanel: false,
+
+    constructor: function(config) {
+        config = Ext.applyIf(config||{}, {
+            autoExpandColumn: 'name',
+            componentType: 'HBaseRegionServer',
+            fields: [
+                {name: 'uid'},
+                {name: 'name'},
+                {name: 'severity'},
+                {name: 'status'},
+                {name: 'usesMonitorAttribute'},
+                {name: 'monitor'},
+                {name: 'monitored'},
+                {name: 'locking'},
+                {name: 'start_code'},
+            ],
+            columns: [{
+                id: 'severity',
+                dataIndex: 'severity',
+                header: _t('Events'),
+                renderer: Zenoss.render.severity,
+                width: 50
+            },{
+                id: 'name',
+                dataIndex: 'name',
+                header: _t('Name'),
+            },{
+                id: 'start_code',
+                dataIndex: 'start_code',
+                header: _t('Start Code'),
+                width: 300
+            },{
+                id: 'status',
+                dataIndex: 'status',
+                header: _t('Status'),
+                renderer: Zenoss.render.pingStatus,
+                width: 60
+            },{
+                id: 'monitored',
+                dataIndex: 'monitored',
+                header: _t('Monitored'),
+                renderer: Zenoss.render.checkbox,
+                width: 60
+            },{
+                id: 'locking',
+                dataIndex: 'locking',
+                header: _t('Locking'),
+                renderer: Zenoss.render.locking_icons,
+                width: 60
+            }]
+        });
+        ZC.HBaseRegionServerPanel.superclass.constructor.call(this, config);
+    }
+});
+
+Ext.reg('HBaseRegionServerPanel', ZC.HBaseRegionServerPanel);
+
+/* HBaseTable */
+ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
+    subComponentGridPanel: false,
+
+    constructor: function(config) {
+        config = Ext.applyIf(config||{}, {
+            autoExpandColumn: 'name',
+            componentType: 'HBaseTable',
+            fields: [
+                {name: 'uid'},
+                {name: 'name'},
+                {name: 'status'},
+                {name: 'severity'},
+                {name: 'usesMonitorAttribute'},
+                {name: 'monitor'},
+                {name: 'monitored'},
+                {name: 'locking'},
+                {name: 'start_code'},
+                {name: 'is_alive'},
+                {name: 'enabled'},
+                {name: 'compaction'},
+            ],
+            columns: [{
+                id: 'severity',
+                dataIndex: 'severity',
+                header: _t('Events'),
+                renderer: Zenoss.render.severity,
+                width: 50
+            },{
+                id: 'name',
+                dataIndex: 'name',
+                header: _t('Name'),
+            },{
+                id: 'compaction',
+                dataIndex: 'compaction',
+                header: _t('Compaction'),
+            },{
+                id: 'enabled',
+                dataIndex: 'enabled',
+                header: _t('Enabled'),
+                renderer: Zenoss.render.trueFalse,
+                width: 60
+            },{
+                id: 'monitored',
+                dataIndex: 'monitored',
+                header: _t('Monitored'),
+                renderer: Zenoss.render.checkbox,
+                width: 60
+            },{
+                id: 'locking',
+                dataIndex: 'locking',
+                header: _t('Locking'),
+                renderer: Zenoss.render.locking_icons,
+                width: 60
+            }]
+        });
+        ZC.HBaseTablePanel.superclass.constructor.call(this, config);
+    }
+});
+
+Ext.reg('HBaseTablePanel', ZC.HBaseTablePanel);
+
+/* HBaseHRegion */
+ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
+    subComponentGridPanel: false,
+
+    constructor: function(config) {
+        config = Ext.applyIf(config||{}, {
+            autoExpandColumn: 'region_id',
+            componentType: 'HBaseHRegion',
+            fields: [
+                {name: 'uid'},
+                {name: 'severity'},
+                {name: 'status'},
+                {name: 'usesMonitorAttribute'},
+                {name: 'monitor'},
+                {name: 'monitored'},
+                {name: 'locking'},
+                {name: 'server'},
+                {name: 'table'},
+                {name: 'start_key'},
+                {name: 'region_id'},
+            ],
+            columns: [{
+                id: 'severity',
+                dataIndex: 'severity',
+                header: _t('Events'),
+                renderer: Zenoss.render.severity,
+                width: 50
+            },{
+                id: 'table',
+                dataIndex: 'table',
+                header: _t('Table'),
+                width: 120
+            },{
+                id: 'start_key',
+                dataIndex: 'start_key',
+                header: _t('Start Key'),
+                width: 60
+            },{
+                id: 'region_id',
+                dataIndex: 'region_id',
+                header: _t('Region ID'),
+                width: 290,
+                renderer: Zenoss.render.linkFromSubgrid,
+            },{
+                id: 'server',
+                dataIndex: 'server',
+                header: _t('Region Server'),
+                renderer: Zenoss.render.linkFromGrid,
+                width: 170
+            },{
+                id: 'status',
+                dataIndex: 'status',
+                header: _t('Status'),
+                renderer: Zenoss.render.pingStatus,
+                width: 60
+            },{
+                id: 'monitored',
+                dataIndex: 'monitored',
+                header: _t('Monitored'),
+                renderer: Zenoss.render.checkbox,
+                width: 60
+            },{
+                id: 'locking',
+                dataIndex: 'locking',
+                header: _t('Locking'),
+                renderer: Zenoss.render.locking_icons,
+                width: 60
+            }]
+        });
+        ZC.HBaseHRegionPanel.superclass.constructor.call(this, config);
+    }
+});
+
+Ext.reg('HBaseHRegionPanel', ZC.HBaseHRegionPanel);
+
+
+/* Subcomponent Panels */
+/* HBaseHRegion */
+Zenoss.nav.appendTo('Component', [{
+    id: 'regions',
+    text: _t('Regions'),
+    xtype: 'HBaseHRegionPanel',
+    subComponentGridPanel: true,
+    filterNav: function(navpanel) {
+         switch (navpanel.refOwner.componentType) {
+            case 'HBaseRegionServer': return true;
+            default: return false;
+         }
+    },
+    setContext: function(uid) {
+        ZC.HBaseHRegionPanel.superclass.setContext.apply(this, [uid]);
+    }
+}]);
+
+})();

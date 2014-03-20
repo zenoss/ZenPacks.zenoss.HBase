@@ -1,0 +1,74 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser = "http://namespaces.zope.org/browser"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    >
+
+    <!-- API: Info Adapters -->
+
+    <adapter
+        provides=".HBaseRegionServer.IHBaseRegionServerInfo"
+        for=".HBaseRegionServer.HBaseRegionServer"
+        factory=".HBaseRegionServer.HBaseRegionServerInfo"
+        />
+
+    <adapter
+        provides=".HBaseTable.IHBaseTableInfo"
+        for=".HBaseTable.HBaseTable"
+        factory=".HBaseTable.HBaseTableInfo"
+        />
+
+    <adapter
+        provides=".HBaseHRegion.IHBaseHRegionInfo"
+        for=".HBaseHRegion.HBaseHRegion"
+        factory=".HBaseHRegion.HBaseHRegionInfo"
+        />
+
+    <!-- <adapter factory=".datasources.MySqlMonitorDataSource.MySqlMonitorDataSourceInfo"
+        for=".datasources.MySqlMonitorDataSource.MySqlMonitorDataSource"
+        provides=".datasources.MySqlMonitorDataSource.IMySqlMonitorDataSourceInfo"
+        /> -->
+
+    <!-- Impact -->
+    <configure zcml:condition="installed ZenPacks.zenoss.Impact">
+        <include package="ZenPacks.zenoss.Impact" file="meta.zcml"/>
+
+        <subscriber
+            provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
+            for=".HBaseRegionServer.HBaseRegionServer"
+            factory=".impact.HBaseRegionServerRelationsProvider"
+            />
+
+        <subscriber
+            provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
+            for=".HBaseHRegion.HBaseHRegion"
+            factory=".impact.HBaseHRegionRelationsProvider"
+            />
+
+        <subscriber
+            provides="ZenPacks.zenoss.Impact.impactd.interfaces.IRelationshipDataProvider"
+            for=".HBaseTable.HBaseTable"
+            factory=".impact.HBaseTableRelationsProvider"
+            />
+
+    </configure>
+
+    <!-- Browser Resources -->
+    <browser:resourceDirectory
+        name="ZenPacks_zenoss_HBase"
+        directory="resources"
+        />
+
+    <!-- JavaScript needed for all Zenoss pages. -->
+    <browser:viewlet
+        name="js-hbase"
+        paths="/++resource++ZenPacks_zenoss_HBase/js/hbase.js"
+        for="*"
+        weight="20"
+        manager="Products.ZenUI3.browser.interfaces.IJavaScriptSrcManager"
+        class="Products.ZenUI3.browser.javascript.JavaScriptSrcBundleViewlet"
+        permission="zope2.Public"
+        />
+
+</configure>
