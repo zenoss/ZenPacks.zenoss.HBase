@@ -28,7 +28,7 @@ from Products.Zuul.interfaces import ICatalogTool
 unused(Globals)
 
 # Categorize zProperties.
-setzPropertyCategory('zHBase', 'HBase')
+# setzPropertyCategory('zHBase', 'HBase')
 setzPropertyCategory('zHBaseUsername', 'HBase')
 setzPropertyCategory('zHBasePassword', 'HBase')
 setzPropertyCategory('zHBasePort', 'HBase')
@@ -161,7 +161,7 @@ class ZenPack(ZenPackBase):
     """
 
     packZProperties = [
-        ('zHBase', False, 'boolean'),
+        # ('zHBase', False, 'boolean'),
         ('zHBaseUsername', '', 'string'),
         ('zHBasePassword', '', 'password'),
         ('zHBasePort', '8080', 'string'),
