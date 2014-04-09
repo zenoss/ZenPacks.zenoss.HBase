@@ -18,13 +18,13 @@ from ZenPacks.zenoss.HBase import dsplugins, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.tests.utils import test_device, load_data
 
 
-class TestHBaseBasePlugin(BaseTestCase):
+class TestHBaseMasterPlugin(BaseTestCase):
 
     def afterSetUp(self):
-        super(TestHBaseBasePlugin, self).afterSetUp()
+        super(TestHBaseMasterPlugin, self).afterSetUp()
         dc = self.dmd.Devices.createOrganizer('/Server')
         self.d = dc.createInstance('hbase.testDevice')
-        self.plugin = dsplugins.HBaseBasePlugin()
+        self.plugin = dsplugins.HBaseMasterPlugin()
 
     def test_get_events(self):
         data = load_data('HBaseCollector.json')
@@ -233,7 +233,7 @@ class TestHBaseTablePlugin(BaseTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(TestHBaseBasePlugin))
+    suite.addTest(makeSuite(TestHBaseMasterPlugin))
     suite.addTest(makeSuite(TestHBaseRegionServerPlugin))
     suite.addTest(makeSuite(TestHBaseHRegionPlugin))
     suite.addTest(makeSuite(TestHBaseTablePlugin))

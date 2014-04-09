@@ -49,6 +49,7 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'monitored'},
                 {name: 'locking'},
                 {name: 'start_code'},
+                {name: 'region_name'},
             ],
             columns: [{
                 id: 'severity',
@@ -58,7 +59,7 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 width: 50
             },{
                 id: 'name',
-                dataIndex: 'name',
+                dataIndex: 'region_name',
                 header: _t('Name'),
             },{
                 id: 'start_code',

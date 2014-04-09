@@ -131,7 +131,8 @@ class HBaseCollector(PythonPlugin):
         if is_alive:
             return ObjectMap({
                 'id': prepId(node['name']),
-                'title': node['name'],
+                'region_name': node['name'],
+                'title': node['name'].split(':')[0],
                 'start_code': node['startCode'],
                 'is_alive': "Up"
             })
@@ -140,7 +141,8 @@ class HBaseCollector(PythonPlugin):
             title, start_code = dead_node_name(node)
             return ObjectMap({
                 'id': prepId(title),
-                'title': title,
+                'region_name': title,
+                'title': title.split(':')[0],
                 'start_code': start_code,
                 'is_alive': "Down"
             })

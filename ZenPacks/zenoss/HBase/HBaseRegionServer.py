@@ -30,10 +30,12 @@ class HBaseRegionServer(HBaseComponent):
 
     start_code = None
     is_alive = None
+    region_name = None
 
     _properties = HBaseComponent._properties + (
         {'id': 'start_code', 'type': 'string'},
         {'id': 'is_alive', 'type': 'string'},
+        {'id': 'region_name', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
@@ -64,6 +66,7 @@ class HBaseRegionServerInfo(ComponentInfo):
 
     start_code = ProxyProperty('start_code')
     is_alive = ProxyProperty('is_alive')
+    region_name = ProxyProperty('region_name')
 
     @property
     @info
