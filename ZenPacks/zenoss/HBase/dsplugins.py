@@ -9,7 +9,7 @@
 ######################################################################
 
 from logging import getLogger
-log = getLogger('zen.zenpython')
+log = getLogger('zen.HBasePlugins')
 
 import re
 import json
@@ -26,6 +26,7 @@ from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
 
+MASTER_INFO_PORT = '60010'
 
 class HBaseException(Exception):
     pass
@@ -33,40 +34,28 @@ class HBaseException(Exception):
 
 class HBaseBasePlugin(PythonDataSourcePlugin):
     """
-    Datasource for HBase Device
-    and base for components' datasource classes.
+    Base datasource plugin for HBase Device and components'
+    plugin classes.
     """
 
     proxy_attributes = (
-        'zHBase',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort',
-        'regionserver_ids'
+        'zHBasePort'
     )
 
     component = None
-
     endpoint = '/status/cluster'
 
     def process(self, result):
         """
         Parses resulting data into datapoints.
+
+        @param result: the data returned from getPage call
+        @type result: str
+        @return: dict of datapoints
         """
-        data = json.loads(result)
-
-        # Calculate the percentage of dead servers.
-        overall_servers = len(data['DeadNodes']) + len(data['LiveNodes'])
-        percent_dead_servers = len(data['DeadNodes'])*100.00 / overall_servers
-
-        return {
-            'live_servers': (len(data['LiveNodes']), 'N'),
-            'dead_servers': (len(data['DeadNodes']), 'N'),
-            'requests_per_second': (data['requests'], 'N'),
-            'regions': (data['regions'], 'N'),
-            'average_load': (data['averageLoad'], 'N'),
-            'percent_dead_servers': (percent_dead_servers, 'N'),
-        }
+        return {}
 
     def add_maps(self, res, ds):
         """
@@ -78,9 +67,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         @type datasource: instance of PythonDataSourceConfig
         @return: ObjectMap|RelationshipMap
         """
-        # The function must run only once, as it remodels all region servers.
-        ds.id = ds.device
-        return HBaseCollector().process(ds, res, log)
+        return []
 
     def get_events(self, result, ds):
         """
@@ -92,32 +79,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         @type ds: instance of PythonDataSourceConfig
         @return: list of events
         """
-        data = json.loads(result)
-        events = []
-        # Check for removed/added servers.
-        dead_nodes = [prepId(dead_node_name(node)[0]) for node
-                      in data["DeadNodes"]]
-        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
-        all_nodes = dead_nodes + live_nodes
-
-        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
-        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
-        for server in added:
-            events.append({
-                'component': server,
-                'summary': "Region server '{0}' is added.".format(
-                    server.replace('_', ':')),
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Info,
-            })
-        for server in removed:
-            events.append({
-                'summary': "Region server '{0}' is removed.".format(
-                    server.replace('_', ':')),
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Info,
-            })
-        return events
+        return []
 
     @defer.inlineCallbacks
     def collect(self, config):
@@ -130,8 +92,6 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         res = ''
 
         ds0 = config.datasources[0]
-        if not ds0.zHBase:
-            defer.returnValue(results)
         # Check the connection and collect data.
         url = hbase_rest_url(
             port=ds0.zHBasePort,
@@ -195,14 +155,76 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         return data
 
 
+class HBaseMasterPlugin(HBaseBasePlugin):
+    """
+    Datasource plugin for HBase Device (Master).
+    """
+
+    proxy_attributes = HBaseBasePlugin.proxy_attributes + (
+        'regionserver_ids',
+    )
+
+    def process(self, result):
+        """
+        Parses resulting data into datapoints.
+        """
+        data = json.loads(result)
+
+        # Calculate the percentage of dead servers.
+        overall_servers = len(data['DeadNodes']) + len(data['LiveNodes'])
+        percent_dead_servers = len(data['DeadNodes'])*100.00 / overall_servers
+
+        return {
+            'live_servers': (len(data['LiveNodes']), 'N'),
+            'dead_servers': (len(data['DeadNodes']), 'N'),
+            'requests_per_second': (data['requests'], 'N'),
+            'regions': (data['regions'], 'N'),
+            'average_load': (data['averageLoad'], 'N'),
+            'percent_dead_servers': (percent_dead_servers, 'N'),
+        }
+
+    def add_maps(self, res, ds):
+        # The function must run only once, as it remodels all region servers.
+        ds.id = ds.device
+        return HBaseCollector().process(ds, res, log)
+
+    def get_events(self, result, ds):
+        data = json.loads(result)
+        events = []
+        # Check for removed/added servers.
+        dead_nodes = [prepId(dead_node_name(node)[0]) for node
+                      in data["DeadNodes"]]
+        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
+        all_nodes = dead_nodes + live_nodes
+
+        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
+        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
+        for server in added:
+            events.append({
+                'component': server,
+                'summary': "Region server '{0}' is added.".format(
+                    server.replace('_', ':')),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        for server in removed:
+            events.append({
+                'summary': "Region server '{0}' is removed.".format(
+                    server.replace('_', ':')),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        return events
+
+
 class HBaseRegionServerPlugin(HBaseBasePlugin):
     """
-    Datasource for HBase Region Server component.
+    Datasource plugin for HBase Region Server component.
     """
 
     def process(self, result):
         """
-        Parses resulting data into datapoints
+        Parses resulting data into datapoints.
         """
         data = json.loads(result)
 
@@ -245,18 +267,15 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
             'severity': severity
         }]
 
-    def add_maps(self, res, ds):
-        return []
-
 
 class HBaseHRegionPlugin(HBaseBasePlugin):
     """
-    Datasource for HBase Region component.
+    Datasource plugin for HBase Region component.
     """
 
     def process(self, result):
         """
-        Parses resulting data into datapoints
+        Parses resulting data into datapoints.
         """
         data = json.loads(result)
         node_id, region_id = self.component.split(NAME_SPLITTER)
@@ -280,16 +299,10 @@ class HBaseHRegionPlugin(HBaseBasePlugin):
                         return _sum_perf_metrics(res, region)
         return res
 
-    def add_maps(self, res, ds):
-        return []
-
-    def get_events(self, result, ds):
-        return []
-
 
 class HBaseTablePlugin(HBaseBasePlugin):
     """
-    Datasource for HBase Table component.
+    Datasource plugin for HBase Table component.
     """
     endpoint = '/table.jsp?name={0}'
 
@@ -300,12 +313,9 @@ class HBaseTablePlugin(HBaseBasePlugin):
         """
         results = self.new_data()
         for ds in config.datasources:
-            if not ds.zHBase:
-                continue
-
             self.component = ds.component
             url = hbase_rest_url(
-                port='60010',
+                port=MASTER_INFO_PORT,
                 host=ds.manageIp,
                 endpoint=self.endpoint.format(self.component)
             )
