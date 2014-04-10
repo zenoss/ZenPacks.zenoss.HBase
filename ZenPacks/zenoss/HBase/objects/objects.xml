@@ -23,7 +23,7 @@
           300
         </property>
         <property id="plugin_classname" mode="w" type="string">
-          ZenPacks.zenoss.HBase.dsplugins.HBaseBasePlugin
+          ZenPacks.zenoss.HBase.dsplugins.HBaseMasterPlugin
         </property>
         <tomanycont id="datapoints">
           <object class="RRDDataPoint" id="live_servers" module="Products.ZenModel.RRDDataPoint">
