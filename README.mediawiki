@@ -111,7 +111,7 @@ Use the following steps to start monitoring HBase:
 # Select Infrastructure from the navigation bar.
 # Click the device name in the device list. The device overview page appears.
 # Select ''Configuration Properties'' from the left panel.
-# Checkmark the ''zHBase'' property checkbox to enable monitoring.
+# Set the ''zCommandUsername'' and ''zCommandPassword''  to setup SSH access.
 # Set the ''zHBasePassword'' and ''zHBaseUsername'' if you have Basic access authentication configured on your HBase master (otherwise those values will be disregarded).
 # Optionally set the ''zHBaseProt'' if you have your HBase rest daemon started on any other port than 8080.
 # Navigate to the ''Modeler plugins'' page of the device containing your HBase server, add the ''HBaseCollector'' and ''HBaseTableCollector'' modeler plugins.
@@ -128,7 +128,7 @@ servers you want to add. The devices shuld be added under the the tagget machine
 
 <syntaxhighlight lang="text">
 /Devices/Server/Linux zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector'], zDeviceTemplates=['HBaseCluster']
-<HOST NAME> zHBase=True, zHBasePort='8080', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>'
+<HOST NAME> zHBasePort='8080', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>', zCommandUsername='<SSH_USERNAME>', zCommandPassword='<SSH_PASSWORD>'
 </syntaxhighlight>
 
 You can then load the HBase monitoring servers into Zenoss Core or Resource Manager as devices with the following command.
@@ -153,9 +153,9 @@ You can start the rest daemon by executing the following command:
 
 <code>bin/hbase-daemon.sh start rest</code>
 
-Please make sure that the default port for the HBase Master web UI (60010) 
-was not changed in the ''hbase-default.xml'' and the UI instance is running, 
-as it is used for tables state monitoring.
+Please make sure that the default ports for the HBase Master web UI (60010) 
+and Hbase Regionserver web UI (60030) were not changed in the ''hbase-default.xml'' 
+and the UI instance is running, as it is used for monitoring.
 
 == Troubleshooting ==
 
@@ -195,7 +195,7 @@ Installing this ZenPack will add the following items to your Zenoss system.
 !width="50%"|Name
 |-
 |Performance Collector
-|zenpython
+|zenpython, zencommand
 |}
 
 {{ZenPackFooter}}
