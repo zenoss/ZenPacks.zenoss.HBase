@@ -111,6 +111,8 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'locking'},
                 {name: 'start_code'},
                 {name: 'is_alive'},
+                {name: 'number_of_col_families'},
+                {name: 'col_family_block_size'},
                 {name: 'enabled'},
                 {name: 'compaction'},
             ],
@@ -124,6 +126,16 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'name',
                 dataIndex: 'name',
                 header: _t('Name'),
+            },{
+                id: 'number_of_col_families',
+                dataIndex: 'number_of_col_families',
+                header: _t('Number of Column Families'),
+                width: 150
+            },{
+                id: 'col_family_block_size',
+                dataIndex: 'col_family_block_size',
+                header: _t('Column Family Block Size'),
+                width: 200
             },{
                 id: 'compaction',
                 dataIndex: 'compaction',

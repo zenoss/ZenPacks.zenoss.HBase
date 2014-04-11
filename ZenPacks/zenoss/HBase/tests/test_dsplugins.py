@@ -221,13 +221,17 @@ class TestHBaseTablePlugin(BaseTestCase):
 
     def test_add_maps(self):
         data = load_data('HBaseTableStatus.txt')
+        schema = load_data('HBaseTableColumnFamily.txt')
         self.plugin.component = sentinel.component
-        result = self.plugin.add_maps(data, sentinel.ds)
+        result = self.plugin.add_maps(data, schema, sentinel.ds)
         om = result[0]
         self.assertEquals(om.compname, 'hbase_tables/sentinel.component')
         self.assertEquals(om.modname, 'HBase table state')
         self.assertEquals(om.enabled, 'false')
         self.assertEquals(om.compaction, '')
+        self.assertEquals(om.number_of_col_families, 2)
+        self.assertEquals(
+            om.col_family_block_size, 'colfam1: 640.0KB; colfam2: 612.0B')
 
 
 def test_suite():

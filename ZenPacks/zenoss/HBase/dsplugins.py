@@ -241,6 +241,8 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
 
     def add_maps(self, res, ds):
         res = json.loads(res)
+        if not res:
+            return []
         tables_update = [table['name'] for table in res.get('table')]
         self.added = list(set(tables_update).difference(set(ds.table_ids)))
         self.removed = list(set(ds.table_ids).difference(set(tables_update)))

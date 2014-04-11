@@ -76,6 +76,26 @@
           </object>
         </tomanycont>
       </object>
+      <object class="PythonDataSource" id="HBaseTablesRemodel" module="ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource">
+        <property id="sourcetype" mode="w" select_variable="sourcetypes" type="selection">
+          Python
+        </property>
+        <property id="enabled" mode="w" type="boolean">
+          True
+        </property>
+        <property id="component" mode="w" type="string">
+          ${here/id}
+        </property>
+        <property id="severity" mode="w" type="int">
+          3
+        </property>
+        <property id="cycletime" mode="w" type="string">
+          300
+        </property>
+        <property id="plugin_classname" mode="w" type="string">
+          ZenPacks.zenoss.HBase.dsplugins.HBaseMasterTablesPlugin
+        </property>
+      </object>
     </tomanycont>
     <tomanycont id="thresholds">
       <object class="MinMaxThreshold" id="DeadServersPercentageCritical" module="Products.ZenModel.MinMaxThreshold">
