@@ -17,9 +17,9 @@ import json
 from twisted.web.client import getPage
 from twisted.internet import defer
 
-from Products.DataCollector.plugins.DataMaps import ObjectMap
+from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenEvents import ZenEventClasses
-from Products.ZenUtils.Utils import prepId
+from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers, dead_node_name
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
@@ -46,6 +46,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
 
     component = None
     endpoint = '/status/cluster'
+    added = []
+    removed = []
 
     def process(self, result):
         """
@@ -162,6 +164,7 @@ class HBaseMasterPlugin(HBaseBasePlugin):
 
     proxy_attributes = HBaseBasePlugin.proxy_attributes + (
         'regionserver_ids',
+        'region_ids'
     )
 
     def process(self, result):
@@ -184,22 +187,31 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         }
 
     def add_maps(self, res, ds):
-        # The function must run only once, as it remodels all region servers.
-        ds.id = ds.device
-        return HBaseCollector().process(ds, res, log)
-
-    def get_events(self, result, ds):
-        data = json.loads(result)
-        events = []
-        # Check for removed/added servers.
+        data = json.loads(res)
+        # Check for removed/added region servers.
         dead_nodes = [prepId(dead_node_name(node)[0]) for node
                       in data["DeadNodes"]]
         live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
-        all_nodes = dead_nodes + live_nodes
+        nodes = dead_nodes + live_nodes
+        self.added = list(set(nodes).difference(set(ds.regionserver_ids)))
+        self.removed = list(set(ds.regionserver_ids).difference(set(nodes)))
 
-        added = list(set(all_nodes).difference(set(ds.regionserver_ids)))
-        removed = list(set(ds.regionserver_ids).difference(set(all_nodes)))
-        for server in added:
+        # Check for removed/added regions.
+        regions = [region.get('name') for node in data["LiveNodes"] 
+                   for region in node.get('Region')]
+        change = set(regions).symmetric_difference(ds.region_ids)
+        # Remodel Regions and RegionServers only if some of them
+        # were added/removed.
+        if self.added or self.removed or change:
+            ds.id = ds.device
+            return HBaseCollector().process(ds, res, log)
+        # If nothing changed, just clear events.
+        return [ObjectMap({'getClearEvents': True})]
+
+    def get_events(self, result, ds):
+        events = []
+        # Check for removed/added servers.
+        for server in self.added:
             events.append({
                 'component': server,
                 'summary': "Region server '{0}' is added.".format(
@@ -207,10 +219,56 @@ class HBaseMasterPlugin(HBaseBasePlugin):
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })
-        for server in removed:
+        for server in self.removed:
             events.append({
                 'summary': "Region server '{0}' is removed.".format(
                     server.replace('_', ':')),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        return events
+
+
+class HBaseMasterTablesPlugin(HBaseBasePlugin):
+    """
+    Datasource plugin for HBase Device (Master).
+    """
+
+    proxy_attributes = HBaseBasePlugin.proxy_attributes + (
+        'table_ids',
+    )
+    endpoint = '/'
+
+    def add_maps(self, res, ds):
+        res = json.loads(res)
+        tables_update = [table['name'] for table in res.get('table')]
+        self.added = list(set(tables_update).difference(set(ds.table_ids)))
+        self.removed = list(set(ds.table_ids).difference(set(tables_update)))
+        if self.added or self.removed:
+            tables_oms = []
+            for table in tables_update:
+                tables_oms.append(ObjectMap({
+                    'id': prepId(table),
+                    'title': table
+                }))
+            return [RelationshipMap(
+                relname='hbase_tables',
+                modname=MODULE_NAME['HBaseTable'],
+                objmaps=tables_oms)]
+        return []
+
+    def get_events(self, result, ds):
+        events = []
+        for table in self.added:
+            events.append({
+                'component': table,
+                'summary': "The table'{0}' is added.".format(table),
+                'eventClass': '/Status',
+                'severity': ZenEventClasses.Info,
+            })
+        for table in self.removed:
+            events.append({
+                'summary': "The table '{0}' is removed.".format(table),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })
@@ -314,23 +372,31 @@ class HBaseTablePlugin(HBaseBasePlugin):
         results = self.new_data()
         for ds in config.datasources:
             self.component = ds.component
+            headers = hbase_headers(
+                accept='application/json',
+                username=ds.zHBaseUsername,
+                passwd=ds.zHBasePassword
+            )
+            # Get compaction and state of the table.
             url = hbase_rest_url(
                 port=MASTER_INFO_PORT,
                 host=ds.manageIp,
                 endpoint=self.endpoint.format(self.component)
             )
-            headers = hbase_headers(
-                accept='text/html',
-                username=ds.zHBaseUsername,
-                passwd=ds.zHBasePassword
+            # Get column family information.
+            schema_url = hbase_rest_url(
+                port=ds.zHBasePort,
+                host=ds.manageIp,
+                endpoint='/{}/schema'.format(self.component)
             )
             try:
                 # Check connection and collect data.
                 res = yield getPage(url, headers=headers)
+                schema = yield getPage(schema_url, headers=headers)
                 if not res:
                     raise HBaseException('No monitoring data.')
                 # Process data if was returned.
-                results['maps'].extend(self.add_maps(res, ds))
+                results['maps'].extend(self.add_maps(res, schema, ds))
                 results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
                 summary = str(e)
@@ -360,16 +426,19 @@ class HBaseTablePlugin(HBaseBasePlugin):
             })
         return result
 
-    def add_maps(self, result, ds):
+    def add_maps(self, result, schema, ds):
+        schema = json.loads(schema)
         return [ObjectMap({
             "compname": "hbase_tables/%s" % self.component,
             "modname": "HBase table state",
-            "enabled": _table_enabled(result),
-            "compaction": _table_compaction(result)
+            "enabled": _matcher(result, r'.+<td>Enabled</td><td>(\w+)</td>'),
+            "compaction": _matcher(result, r'.+<td>Compaction</td><td>(\w+)</td>'),
+            "number_of_col_families": len(schema.get('ColumnSchema')),
+            "col_family_block_size": _block_size(schema.get('ColumnSchema')),
         })]
 
     def get_events(self, result, ds):
-        enabled = _table_enabled(result)
+        enabled = _matcher(result, r'.+<td>Enabled</td><td>(\w+)</td>')
         summary = 'Monitoring ok'
         if enabled != 'true':
             summary = "The table '{0}' is disabled.".format(self.component)
@@ -412,25 +481,25 @@ def _sum_perf_metrics(res, region):
     return res
 
 
-def _table_enabled(res):
+def _matcher(res, rule):
     """
     Parse the getPage result for the table status.
     """
     res = res.replace('\n', '').replace(' ', '')
-    matcher = re.compile(r'.+<td>Enabled</td><td>(?P<enabled>\w+)</td>')
+    matcher = re.compile(rule)
     match = matcher.match(res)
     if match:
-        return match.group('enabled')
+        return match.group(1)
     return ''
 
 
-def _table_compaction(res):
+def _block_size(column_families):
     """
-    Parse the getPage result for the table compaction.
+    Parse the getPage result for the column family block size.
     """
-    res = res.replace('\n', '').replace(' ', '')
-    matcher = re.compile(r'.+<td>Compaction</td><td>(?P<compaction>\w+)</td>')
-    match = matcher.match(res)
-    if match:
-        return match.group('compaction')
-    return ''
+    result = ['{}: {}; '.format(
+                family.get('name'), convToUnits(family.get('BLOCKSIZE'))
+              )
+              for family in column_families]
+    return ''.join(result).rstrip("; ")
+    
