@@ -1,0 +1,37 @@
+{
+    "IS_ROOT": "false", 
+    "ColumnSchema": [
+        {
+            "COMPRESSION": "NONE", 
+            "KEEP_DELETED_CELLS": "false", 
+            "REPLICATION_SCOPE": "0", 
+            "IN_MEMORY": "false", 
+            "MIN_VERSIONS": "0", 
+            "BLOCKCACHE": "true", 
+            "name": "colfam1", 
+            "VERSIONS": "1", 
+            "BLOCKSIZE": "655367", 
+            "DATA_BLOCK_ENCODING": "NONE", 
+            "ENCODE_ON_DISK": "true", 
+            "TTL": "2592000", 
+            "BLOOMFILTER": "NONE"
+        }, 
+        {
+            "COMPRESSION": "NONE", 
+            "KEEP_DELETED_CELLS": "false", 
+            "REPLICATION_SCOPE": "0", 
+            "IN_MEMORY": "false", 
+            "MIN_VERSIONS": "0", 
+            "BLOCKCACHE": "true", 
+            "name": "colfam2", 
+            "VERSIONS": "3", 
+            "BLOCKSIZE": "612", 
+            "DATA_BLOCK_ENCODING": "NONE", 
+            "ENCODE_ON_DISK": "true", 
+            "TTL": "2147483647", 
+            "BLOOMFILTER": "NONE"
+        }
+    ], 
+    "name": "mytable", 
+    "IS_META": "false"
+}

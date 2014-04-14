@@ -224,7 +224,7 @@ class TestHBaseTablePlugin(BaseTestCase):
 
     def test_add_maps(self):
         data = load_data('HBaseTableStatus.txt')
-        schema = load_data('HBaseTableColumnFamily.txt')
+        schema = load_data('HBaseTableColumnFamily.json')
         self.plugin.component = sentinel.component
         result = self.plugin.add_maps(data, schema, sentinel.ds)
         om = result[0]

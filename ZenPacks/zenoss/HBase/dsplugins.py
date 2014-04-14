@@ -46,7 +46,10 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
 
     component = None
     endpoint = '/status/cluster'
+    # A variable to store component ids of added components.
+    # Used for component remodeling and events sending.
     added = []
+    # A variable to store component ids of removed components.
     removed = []
 
     def process(self, result):
@@ -187,14 +190,19 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         }
 
     def add_maps(self, res, ds):
+        """
+        Check for added/removed regionservers and return a RelationshipMap if
+        any changes took place. Otherwise return ObjectMap which only cleares
+        the events of non-existiong components.
+        """
         data = json.loads(res)
         # Check for removed/added region servers.
         dead_nodes = [prepId(dead_node_name(node)[0]) for node
                       in data["DeadNodes"]]
         live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
-        nodes = dead_nodes + live_nodes
-        self.added = list(set(nodes).difference(set(ds.regionserver_ids)))
-        self.removed = list(set(ds.regionserver_ids).difference(set(nodes)))
+        nodes = set(dead_nodes + live_nodes)
+        self.added = list(nodes.difference(set(ds.regionserver_ids)))
+        self.removed = list(set(ds.regionserver_ids).difference(nodes))
 
         # Check for removed/added regions.
         regions = [region.get('name') for node in data["LiveNodes"] 
@@ -209,8 +217,11 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         return [ObjectMap({'getClearEvents': True})]
 
     def get_events(self, result, ds):
+        """
+        Return a list of event dictionaries informing about adding or 
+        removing a region server.
+        """
         events = []
-        # Check for removed/added servers.
         for server in self.added:
             events.append({
                 'component': server,
@@ -240,12 +251,16 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
     endpoint = '/'
 
     def add_maps(self, res, ds):
+        """
+        Check for added/removed tables and return a RelationshipMap if
+        any changes took place. Otherwise return empty list.
+        """
         res = json.loads(res)
         if not res:
             return []
-        tables_update = [table['name'] for table in res.get('table')]
-        self.added = list(set(tables_update).difference(set(ds.table_ids)))
-        self.removed = list(set(ds.table_ids).difference(set(tables_update)))
+        tables_update = set(table['name'] for table in res.get('table'))
+        self.added = list(tables_update.difference(set(ds.table_ids)))
+        self.removed = list(set(ds.table_ids).difference(tables_update))
         if self.added or self.removed:
             tables_oms = []
             for table in tables_update:
@@ -260,6 +275,10 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
         return []
 
     def get_events(self, result, ds):
+        """
+        Return a list of event dictionaries informing about adding or 
+        removing a table.
+        """
         events = []
         for table in self.added:
             events.append({
@@ -311,6 +330,10 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         return {}
 
     def get_events(self, result, ds):
+        """
+        Return a list of event dictionaries informing about the health
+        of the region server.
+        """
         data = json.loads(result)
         # Check for dead servers.
         dead_nodes = [prepId(dead_node_name(node)[0]) for node
@@ -415,6 +438,9 @@ class HBaseTablePlugin(HBaseBasePlugin):
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
+        """
+        Return data structure with events, values and maps.
+        """
         # Clear events for those components, who have maps.
         clear_components = [om.compname.replace('hbase_tables/', '')
                             for om in result['maps']]
@@ -429,6 +455,9 @@ class HBaseTablePlugin(HBaseBasePlugin):
         return result
 
     def add_maps(self, result, schema, ds):
+        """
+        Return ObjectMaps with properties updates for each table.
+        """
         schema = json.loads(schema)
         return [ObjectMap({
             "compname": "hbase_tables/%s" % self.component,
@@ -440,6 +469,10 @@ class HBaseTablePlugin(HBaseBasePlugin):
         })]
 
     def get_events(self, result, ds):
+        """
+        Return a list of event dictionaries informing about the health
+        of the table.
+        """
         enabled = _matcher(result, r'.+<td>Enabled</td><td>(\w+)</td>')
         summary = 'Monitoring ok'
         if enabled != 'true':
@@ -485,7 +518,13 @@ def _sum_perf_metrics(res, region):
 
 def _matcher(res, rule):
     """
-    Parse the getPage result for the table status.
+    Return the value in the first group or empty string if no match found.
+
+    @param res: result of getPage query
+    @type res: str
+    @param rule: regular expression for value matching
+    @type rule: str
+    @return: string value
     """
     res = res.replace('\n', '').replace(' ', '')
     matcher = re.compile(rule)
@@ -497,11 +536,15 @@ def _matcher(res, rule):
 
 def _block_size(column_families):
     """
-    Parse the getPage result for the column family block size.
+    Return the value for column family block size property.
+
+    @param column_families: list of table's column families
+    @type column_families: list
+    @return: string value
     """
-    result = ['{}: {}; '.format(
-                family.get('name'), convToUnits(family.get('BLOCKSIZE'))
-              )
-              for family in column_families]
+    result = [
+        '{}: {}; '.format(
+            family.get('name'), convToUnits(family.get('BLOCKSIZE'))
+        ) for family in column_families
+    ]
     return ''.join(result).rstrip("; ")
-    
