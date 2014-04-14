@@ -104,6 +104,15 @@ def regionservers(self):
     return self.hbase_servers.objectIds()
 
 
+def tables(self):
+    return self.hbase_tables.objectIds()
+
+
+def regions(self):
+    region_ids = [region.region_hash for regionsv in self.hbase_servers() for region in regionsv.regions()]
+    return region_ids
+
+
 def getClearEvents(self):
     """
     Attempt to clear all non-existing component events.
@@ -150,6 +159,8 @@ def clear_events(self):
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
 Device.regionserver_ids = property(regionservers)
+Device.table_ids = property(tables)
+Device.region_ids = property(regions)
 Device.getClearEvents = getClearEvents
 Device.setClearEvents = setClearEvents
 Device.clear_events = clear_events
