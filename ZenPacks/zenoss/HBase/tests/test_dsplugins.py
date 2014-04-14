@@ -32,6 +32,8 @@ class TestHBaseMasterPlugin(BaseTestCase):
         ds = Mock()
         ds.component = sentinel.component
         ds.regionserver_ids = []
+        ds.region_ids = []
+        self.plugin.add_maps(data, ds)
         result = self.plugin.get_events(data, ds)
         # Check event for added server.
         self.assertIn({
@@ -42,6 +44,7 @@ class TestHBaseMasterPlugin(BaseTestCase):
         }, result)
         # Check event for removed server.
         ds.regionserver_ids = ['localhost_11111', 'test']
+        self.plugin.add_maps(data, ds)
         self.assertIn({
             'eventClass': '/Status',
             'severity': 2,
