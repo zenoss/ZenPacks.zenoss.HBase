@@ -14,7 +14,8 @@ from mock import Mock, patch, sentinel
 
 from Products.ZenTestCase.BaseTestCase import BaseTestCase
 from Products.ZenUtils.Utils import prepId
-from ZenPacks.zenoss.HBase import dsplugins, NAME_SPLITTER
+import ZenPacks.zenoss.HBase.dsplugins as dsplugins
+from ZenPacks.zenoss.HBase import NAME_SPLITTER
 from ZenPacks.zenoss.HBase.tests.utils import test_device, load_data
 
 
@@ -31,8 +32,8 @@ class TestHBaseMasterPlugin(BaseTestCase):
         self.plugin.component = 'localhost_11111'
         ds = Mock()
         ds.component = sentinel.component
-        ds.regionserver_ids = []
-        ds.region_ids = []
+        ds.regionserver_ids = ['test']
+        ds.region_ids = ['test']
         self.plugin.add_maps(data, ds)
         result = self.plugin.get_events(data, ds)
         # Check event for added server.

@@ -32,12 +32,16 @@ class HBaseHRegion(HBaseComponent):
     start_key = None
     region_id = None
     region_hash = None
+    memstore_flush_size = None
+    max_file_size = None
 
     _properties = HBaseComponent._properties + (
         {'id': 'table', 'type': 'string'},
         {'id': 'start_key', 'type': 'string'},
         {'id': 'region_id', 'type': 'string'},
         {'id': 'region_hash', 'type': 'string'},
+        {'id': 'memstore_flush_size', 'type': 'string'},
+        {'id': 'max_file_size', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
@@ -61,6 +65,8 @@ class IHBaseHRegionInfo(IComponentInfo):
     start_key = schema.TextLine(title=_t(u'Start Key'))
     region_id = schema.TextLine(title=_t(u'Region ID'))
     region_hash = schema.TextLine(title=_t(u'Hash'))
+    memstore_flush_size = schema.TextLine(title=_t(u'Memstore Flush Size'))
+    max_file_size = schema.TextLine(title=_t(u'Max File Size'))
 
 
 class HBaseHRegionInfo(ComponentInfo):
@@ -73,6 +79,8 @@ class HBaseHRegionInfo(ComponentInfo):
     start_key = ProxyProperty('start_key')
     region_id = ProxyProperty('region_id')
     region_hash = ProxyProperty('region_hash')
+    memstore_flush_size = ProxyProperty('memstore_flush_size')
+    max_file_size = ProxyProperty('max_file_size')
 
     @property
     @info

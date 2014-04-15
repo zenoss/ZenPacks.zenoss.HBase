@@ -109,7 +109,10 @@ def tables(self):
 
 
 def regions(self):
-    region_ids = [region.region_hash for regionsv in self.hbase_servers() for region in regionsv.regions()]
+    region_ids = [
+        region.region_hash for regionsv in self.hbase_servers()
+        for region in regionsv.regions()
+    ]
     return region_ids
 
 

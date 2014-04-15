@@ -56,7 +56,10 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
             return
 
         modeler = HBaseCollector()
-        modeler_results = load_data('HBaseCollector.json')
+        modeler_results = dict(
+            status=load_data('HBaseCollector.json'),
+            conf=None
+        )
 
         for data_map in modeler.process(self.d, modeler_results, log):
             self.applyDataMap(self.d, data_map)
