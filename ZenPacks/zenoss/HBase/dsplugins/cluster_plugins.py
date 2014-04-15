@@ -16,7 +16,7 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME
-from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin, sum_perf_metrics
+from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
 from ZenPacks.zenoss.HBase.utils import dead_node_name
 

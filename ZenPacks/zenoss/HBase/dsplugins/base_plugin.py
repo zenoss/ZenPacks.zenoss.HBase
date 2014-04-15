@@ -161,22 +161,17 @@ def sum_perf_metrics(res, region):
     """
     Util function for summing region metrics
     """
-    res['read_requests'] = (res['read_requests'][0] +
-                            region['readRequestsCount'], 'N')
-    res['write_requests'] = (res['write_requests'][0] +
-                             region['writeRequestsCount'], 'N')
-    res['number_of_stores'] = (res['number_of_stores'][0] +
-                               region['stores'], 'N')
-    res['number_of_store_files'] = (res['number_of_store_files'][0] +
-                                    region['storefiles'], 'N')
-    res['store_file_size_mb'] = (res['store_file_size_mb'][0] +
-                                 region['storefileSizeMB'], 'N')
-    res['store_file_index_size_mb'] = (res['store_file_index_size_mb'][0] +
-                                       region['storefileIndexSizeMB'], 'N')
-    res['memstore_size_mb'] = (res['memstore_size_mb'][0] +
-                               region['memstoreSizeMB'], 'N')
-    res['current_compacted_kv'] = (res['current_compacted_kv'][0] +
-                                   region['currentCompactedKVs'], 'N')
-    res['total_compacting_kv'] = (res['total_compacting_kv'][0] +
-                                  region['totalCompactingKVs'], 'N')
+    props_match = dict(
+        read_requests='readRequestsCount',
+        write_requests='writeRequestsCount',
+        number_of_stores='stores',
+        number_of_store_files='storefiles',
+        store_file_size_mb='storefileSizeMB',
+        store_file_index_size_mb='storefileIndexSizeMB',
+        memstore_size_mb='memstoreSizeMB',
+        current_compacted_kv='currentCompactedKVs',
+        total_compacting_kv='totalCompactingKVs'
+    )
+    for prop in props_match:
+        res[prop] = (res[prop][0] + region[props_match[prop]], 'N')
     return res

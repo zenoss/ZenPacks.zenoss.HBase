@@ -23,7 +23,7 @@ from ZenPacks.zenoss.HBase.dsplugins.base_plugin import (
     HBaseBasePlugin, HBaseException, sum_perf_metrics
 )
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, dead_node_name
+    hbase_rest_url, hbase_headers, dead_node_name,
     REGIONSERVER_INFO_PORT, ConfWrapper
 )
 

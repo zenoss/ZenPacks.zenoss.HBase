@@ -23,7 +23,7 @@ from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, dead_node_name
+    hbase_rest_url, hbase_headers, dead_node_name,
     ConfWrapper, REGIONSERVER_INFO_PORT
 )
 
@@ -99,7 +99,7 @@ class HBaseCollector(PythonPlugin):
         ])
 
         # If results.conf is None, it means that the methos is called from
-        # monitoring plugin and the following properties are not needed.
+        # monitoring plugin and the conf properties do not need to be updated.
         conf = ConfWrapper(results['conf']) if results['conf'] else None
         data = json.loads(results['status'])
 
