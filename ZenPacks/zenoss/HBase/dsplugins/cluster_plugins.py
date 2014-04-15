@@ -68,9 +68,9 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         self.removed = list(set(ds.regionserver_ids).difference(nodes))
 
         # Check for removed/added regions.
-        regions = [region.get('name') for node in data["LiveNodes"]
-                   for region in node.get('Region')]
-        change = set(regions).symmetric_difference(ds.region_ids)
+        regions = set(region.get('name') for node in data["LiveNodes"]
+                   for region in node.get('Region'))
+        change = regions.symmetric_difference(ds.region_ids)
         # Remodel Regions and RegionServers only if some of them
         # were added/removed.
         if self.added or self.removed or change:
@@ -91,7 +91,7 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         events = []
         for server in self.added:
             events.append({
-                'component': server,
+                # 'component': server,
                 'summary': "Region server '{0}' is added.".format(
                     server.replace('_', ':')),
                 'eventClass': '/Status',
@@ -152,8 +152,8 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
         events = []
         for table in self.added:
             events.append({
-                'component': table,
-                'summary': "The table'{0}' is added.".format(table),
+                # 'component': table,
+                'summary': "The table '{0}' is added.".format(table),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })

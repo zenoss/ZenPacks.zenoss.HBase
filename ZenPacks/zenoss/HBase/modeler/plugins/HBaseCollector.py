@@ -152,7 +152,7 @@ class HBaseCollector(PythonPlugin):
             'start_code': start_code,
             'is_alive': "Up" if is_alive else "Down"
         }
-        # If called from monitoring plugin.
+        # If called not from monitoring plugin.
         if conf:
             object_map.update({
                 'handler_count': conf.handler_count,
@@ -173,7 +173,7 @@ class HBaseCollector(PythonPlugin):
             'region_id': r_id,
             'region_hash': region['name']
         }
-        # If called from monitoring plugin.
+        # If called not from monitoring plugin.
         if conf:
             object_map.update({
                 'memstore_flush_size': convToUnits(conf.memestore_flush_size),

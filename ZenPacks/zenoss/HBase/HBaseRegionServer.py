@@ -10,7 +10,7 @@
 from zope.component import adapts
 from zope.interface import implements
 
-from Products.ZenRelations.RelSchema import ToOne, ToMany, ToManyCont
+from Products.ZenRelations.RelSchema import ToOne, ToManyCont
 
 from Products.Zuul.catalog.paths import DefaultPathReporter, relPath
 from Products.Zuul.decorators import info
@@ -22,7 +22,6 @@ from Products.Zuul.utils import ZuulMessageFactory as _t
 
 from . import CLASS_NAME, MODULE_NAME
 from .HBaseComponent import HBaseComponent
-from .utils import updateToMany, updateToOne
 
 
 class HBaseRegionServer(HBaseComponent):

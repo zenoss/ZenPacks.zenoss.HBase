@@ -15,6 +15,7 @@ from Products.ZenUtils.Utils import getExitMessage
 
 log = logging.getLogger("zen.HBaseParser")
 
+
 class hbase_parser(CommandParser):
     def processResults(self, cmd, result):
         """
