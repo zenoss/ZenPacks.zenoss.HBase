@@ -9,19 +9,23 @@
 
 ''' Models discovery tree for HBase. '''
 
-import json
 import collections
+import json
 import zope.component
 
 from itertools import chain
+from twisted.internet import defer
 from twisted.web.client import getPage
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
-from Products.ZenUtils.Utils import prepId
+from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers, dead_node_name
+from ZenPacks.zenoss.HBase.utils import (
+    hbase_rest_url, hbase_headers, dead_node_name,
+    ConfWrapper, REGIONSERVER_INFO_PORT
+)
 
 
 class HBaseCollector(PythonPlugin):
@@ -39,30 +43,38 @@ class HBaseCollector(PythonPlugin):
         'zHBasePort'
         )
 
+    @defer.inlineCallbacks
     def collect(self, device, log):
         log.info("Collecting data for device %s", device.id)
+        result = {}
 
-        url = hbase_rest_url(
+        status_url = hbase_rest_url(
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/status/cluster'
+        )
+        conf_url = hbase_rest_url(
+            port=REGIONSERVER_INFO_PORT,
+            host=device.manageIp,
+            endpoint='/dump'
         )
         headers = hbase_headers(
             accept='application/json',
             username=device.zHBaseUsername,
             passwd=device.zHBasePassword
         )
-        res = getPage(url, headers=headers)
-        res.addCallbacks(
-            lambda r: self.on_success(log, device, r),
-            lambda f: self.on_error(log, device, f)
-        )
-        return res
+        try:
+            result['status'] = yield getPage(status_url, headers=headers)
+            result['conf'] = yield getPage(conf_url, headers=headers)
+        except Exception, f:
+            self.on_error(log, device, f)
 
-    def on_success(self, log, device, data):
+        self.on_success(log, device)
+        defer.returnValue(result)
+
+    def on_success(self, log, device):
         log.info('Successfull modeling')
         self._send_event("Successfull modeling", device.id, 0)
-        return data
 
     def on_error(self, log, device, failure):
         try:
@@ -86,18 +98,21 @@ class HBaseCollector(PythonPlugin):
             ('device', []),
         ])
 
-        data = json.loads(results)
+        # If results.conf is None, it means that the methos is called from
+        # monitoring plugin and the conf properties do not need to be updated.
+        conf = ConfWrapper(results['conf']) if results['conf'] else None
+        data = json.loads(results['status'])
 
         # List of servers
         server_oms = []
         for node in data["LiveNodes"]:
             node_id = prepId(node['name'])
-            server_oms.append(self._node_om(node, True))
+            server_oms.append(self._node_om(node, conf, True))
 
             # List of regions
             region_oms = []
             for region in node["Region"]:
-                region_oms.append(self._region_om(region, node_id))
+                region_oms.append(self._region_om(region, node_id, conf))
 
             maps['regions'].append(RelationshipMap(
                 compname='hbase_servers/%s' % node_id,
@@ -106,7 +121,7 @@ class HBaseCollector(PythonPlugin):
                 objmaps=region_oms))
 
         for node in data["DeadNodes"]:
-            server_oms.append(self._node_om(node))
+            server_oms.append(self._node_om(node, conf))
 
         maps['hbase_servers'].append(RelationshipMap(
             relname='hbase_servers',
@@ -122,42 +137,49 @@ class HBaseCollector(PythonPlugin):
             'Modeler %s finished processing data for device %s',
             self.name(), device.id
         )
-
         return list(chain.from_iterable(maps.itervalues()))
 
-    def _node_om(self, node, is_alive=False):
+    def _node_om(self, node, conf, is_alive=False):
         """Builds HBase Region Server object map"""
-
         if is_alive:
-            return ObjectMap({
-                'id': prepId(node['name']),
-                'region_name': node['name'],
-                'title': node['name'].split(':')[0],
-                'start_code': node['startCode'],
-                'is_alive': "Up"
-            })
+            title, start_code = (node['name'], node['startCode'])
         else:
-            # For dead servers the name is returned as 'domain,port,startcode'
             title, start_code = dead_node_name(node)
-            return ObjectMap({
-                'id': prepId(title),
-                'region_name': title,
-                'title': title.split(':')[0],
-                'start_code': start_code,
-                'is_alive': "Down"
+        object_map = {
+            'id': prepId(title),
+            'region_name': title,
+            'title': title.split(':')[0],
+            'start_code': start_code,
+            'is_alive': "Up" if is_alive else "Down"
+        }
+        # If called from monitoring plugin.
+        if conf:
+            object_map.update({
+                'handler_count': conf.handler_count,
+                'memstrore_upper_limit': conf.memstrore_upper_limit,
+                'memstrore_lower_limit': conf.memstrore_lower_limit,
+                'logflush_interval': conf.logflush_interval
             })
+        return ObjectMap(object_map)
 
-    def _region_om(self, region, node_id):
+    def _region_om(self, region, node_id, conf):
         """Builds HBase Region object map"""
         table, start_key, r_id = region['name'].decode('base64').split(',')
-        return ObjectMap({
+        object_map = {
             'id': node_id + NAME_SPLITTER + prepId(region['name']),
             'title': region['name'].decode('base64'),
             'table': table,
             'start_key': start_key,
             'region_id': r_id,
             'region_hash': region['name']
-        })
+        }
+        # If called from monitoring plugin.
+        if conf:
+            object_map.update({
+                'memstore_flush_size': convToUnits(conf.memestore_flush_size),
+                'max_file_size': convToUnits(conf.max_file_size)
+            })
+        return ObjectMap(object_map)
 
     def _send_event(self, reason, id, severity, force=False):
         """
