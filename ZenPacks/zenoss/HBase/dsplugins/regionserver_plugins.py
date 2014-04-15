@@ -140,8 +140,8 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             'memstrore_lower_limit': conf.memstrore_lower_limit,
             'logflush_interval': conf.logflush_interval
         }))
-        # All the regions within region server will have the same
-        # configuration as the region server.
+        # All the regions within the region server will have the same
+        # configuration as set in the region server's conf file.
         for region in ds.region_ids:
             oms.append(ObjectMap({
                 "compname": "hbase_servers/{}/regions/{}{}{}".format(

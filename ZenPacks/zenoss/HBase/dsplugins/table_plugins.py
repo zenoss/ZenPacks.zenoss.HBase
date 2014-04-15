@@ -86,7 +86,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
         """
         Return data structure with events, values and maps.
         """
-        # Clear events for those components, who have maps.
+        # Clear events for those components, which have maps.
         clear_components = [om.compname.replace('hbase_tables/', '')
                             for om in result['maps']]
         for component in clear_components:

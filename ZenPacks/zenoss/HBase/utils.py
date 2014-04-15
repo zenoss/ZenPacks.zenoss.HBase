@@ -15,7 +15,7 @@ from base64 import encodestring
 from zope.event import notify
 
 from Products.AdvancedQuery import Eq, Or
-from Products.ZenUtils.Utils import prepId
+from Products.ZenUtils.Utils import prepId, readable_time
 from Products.Zuul.interfaces import ICatalogTool
 from Products.Zuul.catalog.events import IndexingEvent
 
@@ -196,9 +196,7 @@ class ConfWrapper(object):
         self.memstrore_lower_limit = matcher(self.conf, self.rule(
             'hbase.regionserver.global.memstore.lowerLimit'
         ))  # Defaults to 0.35.
-        self.logflush_interval = matcher(self.conf, self.rule(
-            'hbase.regionserver.optionallogflushinterval'
-        ))  # Defaults to 1000.
+        self.logflush_interval = self.logflush_interval()  # Defaults to 10000.
         self.memestore_flush_size = matcher(self.conf, self.rule(
             'hbase.hregion.memstore.flush.size'
         ))  # Defaults to 134217728.
@@ -212,5 +210,17 @@ class ConfWrapper(object):
 
         @param property_name: the name of the property to be found
         @type property_name: str
+        @return: regex rule of string
         """
         return r'.+<name>{}</name><value>(.+?)</value>'.format(property_name)
+
+    def logflush_interval(self):
+        """
+        Return log flush interval value in readable format.
+        In case no value was matched, return None.
+        """
+        ms = matcher(self.conf, self.rule(
+            'hbase.regionserver.optionallogflushinterval'
+        ))
+        if ms:
+            return readable_time(int(ms) / 1000, 2)
