@@ -18,7 +18,7 @@ from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME
 from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import HBaseCollector
-from ZenPacks.zenoss.HBase.utils import dead_node_name
+from ZenPacks.zenoss.HBase.utils import dead_node_name, version_diff
 
 log = getLogger('zen.HBasePlugins')
 
@@ -32,20 +32,25 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         'regionserver_ids',
         'region_ids'
     )
+    # Containers for nodes to avoid a lot of parsing.
+    dead = None
+    live = None
 
     def process(self, result):
         """
         Parses resulting data into datapoints.
         """
         data = json.loads(result)
+        self.dead = version_diff(data['DeadNodes'])
+        self.live = version_diff(data['LiveNodes'])
 
         # Calculate the percentage of dead servers.
-        overall_servers = len(data['DeadNodes']) + len(data['LiveNodes'])
-        percent_dead_servers = len(data['DeadNodes'])*100.00 / overall_servers
+        overall_servers = len(self.dead) + len(self.live)
+        percent_dead_servers = len(self.dead)*100.00 / overall_servers
 
         return {
-            'live_servers': (len(data['LiveNodes']), 'N'),
-            'dead_servers': (len(data['DeadNodes']), 'N'),
+            'live_servers': (len(self.live), 'N'),
+            'dead_servers': (len(self.dead), 'N'),
             'requests_per_second': (data['requests'], 'N'),
             'regions': (data['regions'], 'N'),
             'average_load': (data['averageLoad'], 'N'),
@@ -58,18 +63,16 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         any changes took place. Otherwise return ObjectMap which only cleares
         the events of non-existiong components.
         """
-        data = json.loads(res)
         # Check for removed/added region servers.
-        dead_nodes = [prepId(dead_node_name(node)[0]) for node
-                      in data["DeadNodes"]]
-        live_nodes = [prepId(node['name']) for node in data["LiveNodes"]]
+        dead_nodes = [prepId(dead_node_name(node)[0]) for node in self.dead]
+        live_nodes = [prepId(node['name']) for node in self.live]
         nodes = set(dead_nodes + live_nodes)
         self.added = list(nodes.difference(set(ds.regionserver_ids)))
         self.removed = list(set(ds.regionserver_ids).difference(nodes))
 
         # Check for removed/added regions.
-        regions = set(region.get('name') for node in data["LiveNodes"]
-                   for region in node.get('Region'))
+        regions = set(region.get('name') for node in self.live
+                      for region in node.get('Region'))
         change = regions.symmetric_difference(ds.region_ids)
         # Remodel Regions and RegionServers only if some of them
         # were added/removed.

@@ -34,12 +34,13 @@ class TestHBaseMasterPlugin(BaseTestCase):
         ds.component = sentinel.component
         ds.regionserver_ids = ['test']
         ds.region_ids = ['test']
+        self.plugin.process(data)
         self.plugin.add_maps(data, ds)
         result = self.plugin.get_events(data, ds)
         # Check event for added server.
         self.assertIn({
             'eventClass': '/Status',
-            'component': 'localhost_44451',
+            # 'component': 'localhost_44451',
             'severity': 2,
             'summary': "Region server 'localhost:44451' is added."
         }, result)

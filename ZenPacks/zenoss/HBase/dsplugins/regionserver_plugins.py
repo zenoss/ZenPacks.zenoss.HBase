@@ -20,11 +20,11 @@ from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.dsplugins.base_plugin import (
-    HBaseBasePlugin, HBaseException, sum_perf_metrics
+    HBaseBasePlugin, sum_perf_metrics
 )
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, dead_node_name,
-    REGIONSERVER_INFO_PORT, ConfWrapper
+    hbase_rest_url, hbase_headers, dead_node_name, version_diff,
+    REGIONSERVER_INFO_PORT, ConfWrapper, HBaseException
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -41,7 +41,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         """
         data = json.loads(result)
 
-        for node in data["LiveNodes"]:
+        for node in version_diff(data["LiveNodes"]):
             if self.component == prepId(node['name']):
                 res = {
                     'requests_per_second': (node['requests'], 'N'),
@@ -71,7 +71,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
         data = json.loads(result)
         # Check for dead servers.
         dead_nodes = [prepId(dead_node_name(node)[0]) for node
-                      in data["DeadNodes"]]
+                      in version_diff(data["DeadNodes"])]
         # Send error or clear event.
         severity = ((self.component in dead_nodes) and ZenEventClasses.Error
                     or ZenEventClasses.Clear)
@@ -112,6 +112,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             # TODO: it's a workaround, try to find another way.
             host = ds.manageIp if 'localhost' in ds.title else ds.title
             url = hbase_rest_url(
+                scheme=ds.zHBaseScheme,
                 port=REGIONSERVER_INFO_PORT,
                 host=host,
                 endpoint='/dump'
