@@ -33,6 +33,7 @@ class HBaseTableCollector(PythonPlugin):
     _eventService = zope.component.queryUtility(IEventService)
 
     deviceProperties = PythonPlugin.deviceProperties + (
+        'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
         'zHBasePort'
@@ -42,6 +43,7 @@ class HBaseTableCollector(PythonPlugin):
         log.info("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
+            scheme=device.zHBaseScheme,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/'

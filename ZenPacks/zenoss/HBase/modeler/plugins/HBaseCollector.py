@@ -24,7 +24,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, REGIONSERVER_INFO_PORT
+    ConfWrapper, REGIONSERVER_INFO_PORT, version_diff
 )
 
 
@@ -38,6 +38,7 @@ class HBaseCollector(PythonPlugin):
     _eventService = zope.component.queryUtility(IEventService)
 
     deviceProperties = PythonPlugin.deviceProperties + (
+        'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
         'zHBasePort'
@@ -49,11 +50,13 @@ class HBaseCollector(PythonPlugin):
         result = {}
 
         status_url = hbase_rest_url(
+            scheme=device.zHBaseScheme,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/status/cluster'
         )
         conf_url = hbase_rest_url(
+            scheme=device.zHBaseScheme,
             port=REGIONSERVER_INFO_PORT,
             host=device.manageIp,
             endpoint='/dump'
@@ -105,7 +108,7 @@ class HBaseCollector(PythonPlugin):
 
         # List of servers
         server_oms = []
-        for node in data["LiveNodes"]:
+        for node in version_diff(data["LiveNodes"]):
             node_id = prepId(node['name'])
             server_oms.append(self._node_om(node, conf, True))
 
@@ -120,7 +123,7 @@ class HBaseCollector(PythonPlugin):
                 modname=MODULE_NAME['HBaseHRegion'],
                 objmaps=region_oms))
 
-        for node in data["DeadNodes"]:
+        for node in version_diff(data["DeadNodes"]):
             server_oms.append(self._node_om(node, conf))
 
         maps['hbase_servers'].append(RelationshipMap(

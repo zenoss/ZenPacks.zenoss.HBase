@@ -20,6 +20,13 @@ from Products.Zuul.interfaces import ICatalogTool
 from Products.Zuul.catalog.events import IndexingEvent
 
 
+class HBaseException(Exception):
+    """
+    Exception class to catch known exceptions.
+    """
+    pass
+
+
 def here(dir, base=os.path.dirname(__file__)):
     return os.path.join(base, dir)
 
@@ -121,11 +128,11 @@ MASTER_INFO_PORT = '60010'
 REGIONSERVER_INFO_PORT = '60030'
 
 
-def hbase_rest_url(port, host, endpoint):
+def hbase_rest_url(scheme, port, host, endpoint):
     """
     Constructs URL to access HBase REST interface.
     """
-    url = 'http://{}:{}{}'.format(host, port, endpoint)
+    url = '{}://{}:{}{}'.format(scheme, host, port, endpoint)
     return url
 
 
@@ -142,6 +149,35 @@ def hbase_headers(accept, username, passwd):
         "Authorization": authHeader,
         'Proxy-Authenticate': authHeader
     }
+
+
+def version_diff(nodes):
+    """
+    There are known differences between HBase 0.94.16 and 0.94.6
+    REST server output.
+    Create the common output for LiveNodes and DeadNodes and filter
+    None values.
+    Raise HBaseException in case the nodes can not be parsed.
+
+    @param nodes: a list of dead or live nodes of a region server
+    @type nodes: list
+    @todo: check other HBase versions
+    """
+    nodes = filter(None, nodes)
+    common_nodes = []
+    for node in nodes:
+        # Dead nodes.
+        if isinstance(node, unicode):
+            common_nodes.append(node)
+        # Live nodes 0.94.16 version.
+        elif node.get('name'):
+            common_nodes.append(node)
+        # Live nodes 0.94.6 version.
+        elif node.get('Node'):
+            common_nodes.append(node.get('Node'))
+        else:
+            raise HBaseException("Error parsing REST output.")
+    return common_nodes
 
 
 def dead_node_name(node):

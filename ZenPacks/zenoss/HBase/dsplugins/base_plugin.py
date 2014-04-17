@@ -14,18 +14,13 @@ from twisted.web.client import getPage
 from twisted.internet import defer
 
 from Products.ZenEvents import ZenEventClasses
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers
+from ZenPacks.zenoss.HBase.utils import (
+    hbase_rest_url, hbase_headers, HBaseException
+)
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
 
 log = getLogger('zen.HBasePlugins')
-
-
-class HBaseException(Exception):
-    """
-    Exception class to catch known exceptions
-    """
-    pass
 
 
 class HBaseBasePlugin(PythonDataSourcePlugin):
@@ -35,6 +30,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
     """
 
     proxy_attributes = (
+        'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
         'zHBasePort'
@@ -95,6 +91,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         ds0 = config.datasources[0]
         # Check the connection and collect data.
         url = hbase_rest_url(
+            scheme=ds0.zHBaseScheme,
             port=ds0.zHBasePort,
             host=ds0.manageIp,
             endpoint=self.endpoint

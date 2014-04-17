@@ -15,6 +15,7 @@ from logging import getLogger
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import NAME_SPLITTER
 from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin, sum_perf_metrics
+from ZenPacks.zenoss.HBase.utils import version_diff
 
 log = getLogger('zen.HBasePlugins')
 
@@ -32,7 +33,7 @@ class HBaseHRegionPlugin(HBaseBasePlugin):
         node_id, region_id = self.component.split(NAME_SPLITTER)
         res = {}
 
-        for node in data["LiveNodes"]:
+        for node in version_diff(data["LiveNodes"]):
             if node_id == prepId(node['name']):
                 for region in node["Region"]:
                     if region_id == prepId(region['name']):
