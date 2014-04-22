@@ -33,6 +33,7 @@ class HBaseTableCollector(PythonPlugin):
     _eventService = zope.component.queryUtility(IEventService)
 
     deviceProperties = PythonPlugin.deviceProperties + (
+        'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
         'zHBasePort'
@@ -42,6 +43,7 @@ class HBaseTableCollector(PythonPlugin):
         log.info("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
+            scheme=device.zHBaseScheme,
             port=device.zHBasePort,
             host=device.manageIp,
             endpoint='/'
@@ -107,8 +109,11 @@ class HBaseTableCollector(PythonPlugin):
         return ObjectMap({
             'id': prepId(table['name']),
             'title': table['name'],
-            'compaction': '',
-            'enabled': ''
+            # The following properties will be updated on monitoring.
+            # 'compaction': 'NONE',
+            # 'enabled': 'true',
+            # 'number_of_col_families': '',
+            # 'col_family_block_size': ''
         })
 
     def _send_event(self, reason, id, severity, force=False):

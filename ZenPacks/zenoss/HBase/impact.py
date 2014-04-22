@@ -136,15 +136,17 @@ class BaseTriggers(object):
 # Impact relationships
 
 class HBaseRegionServerRelationsProvider(BaseRelationsProvider):
-    impacted_by_relationships = ['hbase_host', 'regions']
-    impact_relationships = ['hbase_host', 'regions']
+    # impacted_by_relationships = ['hbase_host', 'regions']
+    # impact_relationships = ['hbase_host', 'regions']
+    impacted_by_relationships = ['regions']
+    impact_relationships = ['hbase_host']
 
 
 class HBaseHRegionRelationsProvider(BaseRelationsProvider):
-    impacted_by_relationships = ['server']
+    # impacted_by_relationships = ['server']
     impact_relationships = ['server']
 
 
 class HBaseTableRelationsProvider(BaseRelationsProvider):
-    impacted_by_relationships = ['hbase_host']
+    # impacted_by_relationships = ['hbase_host']
     impact_relationships = ['hbase_host']

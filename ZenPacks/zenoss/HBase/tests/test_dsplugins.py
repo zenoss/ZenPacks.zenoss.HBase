@@ -14,34 +14,39 @@ from mock import Mock, patch, sentinel
 
 from Products.ZenTestCase.BaseTestCase import BaseTestCase
 from Products.ZenUtils.Utils import prepId
-from ZenPacks.zenoss.HBase import dsplugins, NAME_SPLITTER
+import ZenPacks.zenoss.HBase.dsplugins as dsplugins
+from ZenPacks.zenoss.HBase import NAME_SPLITTER
 from ZenPacks.zenoss.HBase.tests.utils import test_device, load_data
 
 
-class TestHBaseBasePlugin(BaseTestCase):
+class TestHBaseMasterPlugin(BaseTestCase):
 
     def afterSetUp(self):
-        super(TestHBaseBasePlugin, self).afterSetUp()
+        super(TestHBaseMasterPlugin, self).afterSetUp()
         dc = self.dmd.Devices.createOrganizer('/Server')
         self.d = dc.createInstance('hbase.testDevice')
-        self.plugin = dsplugins.HBaseBasePlugin()
+        self.plugin = dsplugins.HBaseMasterPlugin()
 
     def test_get_events(self):
         data = load_data('HBaseCollector.json')
         self.plugin.component = 'localhost_11111'
         ds = Mock()
         ds.component = sentinel.component
-        ds.regionserver_ids = []
+        ds.regionserver_ids = ['test']
+        ds.region_ids = ['test']
+        self.plugin.process(data)
+        self.plugin.add_maps(data, ds)
         result = self.plugin.get_events(data, ds)
         # Check event for added server.
         self.assertIn({
             'eventClass': '/Status',
-            'component': 'localhost_44451',
+            # 'component': 'localhost_44451',
             'severity': 2,
             'summary': "Region server 'localhost:44451' is added."
         }, result)
         # Check event for removed server.
         ds.regionserver_ids = ['localhost_11111', 'test']
+        self.plugin.add_maps(data, ds)
         self.assertIn({
             'eventClass': '/Status',
             'severity': 2,
@@ -221,19 +226,23 @@ class TestHBaseTablePlugin(BaseTestCase):
 
     def test_add_maps(self):
         data = load_data('HBaseTableStatus.txt')
+        schema = load_data('HBaseTableColumnFamily.json')
         self.plugin.component = sentinel.component
-        result = self.plugin.add_maps(data, sentinel.ds)
+        result = self.plugin.add_maps(data, schema, sentinel.ds)
         om = result[0]
         self.assertEquals(om.compname, 'hbase_tables/sentinel.component')
         self.assertEquals(om.modname, 'HBase table state')
         self.assertEquals(om.enabled, 'false')
         self.assertEquals(om.compaction, '')
+        self.assertEquals(om.number_of_col_families, 2)
+        self.assertEquals(
+            om.col_family_block_size, 'colfam1: 640.0KB; colfam2: 612.0B')
 
 
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(TestHBaseBasePlugin))
+    suite.addTest(makeSuite(TestHBaseMasterPlugin))
     suite.addTest(makeSuite(TestHBaseRegionServerPlugin))
     suite.addTest(makeSuite(TestHBaseHRegionPlugin))
     suite.addTest(makeSuite(TestHBaseTablePlugin))

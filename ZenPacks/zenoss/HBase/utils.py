@@ -7,16 +7,24 @@
 #
 ##############################################################################
 
-import os
 import json
+import os
+import re
 
 from base64 import encodestring
 from zope.event import notify
 
 from Products.AdvancedQuery import Eq, Or
-from Products.ZenUtils.Utils import prepId
+from Products.ZenUtils.Utils import prepId, readable_time
 from Products.Zuul.interfaces import ICatalogTool
 from Products.Zuul.catalog.events import IndexingEvent
+
+
+class HBaseException(Exception):
+    """
+    Exception class to catch known exceptions.
+    """
+    pass
 
 
 def here(dir, base=os.path.dirname(__file__)):
@@ -115,12 +123,16 @@ def updateToOne(relationship, root, type_, id_):
 
     return
 
+# HBase default ports.
+MASTER_INFO_PORT = '60010'
+REGIONSERVER_INFO_PORT = '60030'
 
-def hbase_rest_url(port, host, endpoint):
+
+def hbase_rest_url(scheme, port, host, endpoint):
     """
     Constructs URL to access HBase REST interface.
     """
-    url = 'http://{}:{}{}'.format(host, port, endpoint)
+    url = '{}://{}:{}{}'.format(scheme, host, port, endpoint)
     return url
 
 
@@ -139,6 +151,35 @@ def hbase_headers(accept, username, passwd):
     }
 
 
+def version_diff(nodes):
+    """
+    There are known differences between HBase 0.94.16 and 0.94.6
+    REST server output.
+    Create the common output for LiveNodes and DeadNodes and filter
+    None values.
+    Raise HBaseException in case the nodes can not be parsed.
+
+    @param nodes: a list of dead or live nodes of a region server
+    @type nodes: list
+    @todo: check other HBase versions
+    """
+    nodes = filter(None, nodes)
+    common_nodes = []
+    for node in nodes:
+        # Dead nodes.
+        if isinstance(node, unicode):
+            common_nodes.append(node)
+        # Live nodes 0.94.16 version.
+        elif node.get('name'):
+            common_nodes.append(node)
+        # Live nodes 0.94.6 version.
+        elif node.get('Node'):
+            common_nodes.append(node.get('Node'))
+        else:
+            raise HBaseException("Error parsing REST output.")
+    return common_nodes
+
+
 def dead_node_name(node):
     """
     Parses the dead server name in format of 'domain,port,startcode'
@@ -150,3 +191,72 @@ def dead_node_name(node):
         return title, start_code
     except:
         return node, node
+
+
+def matcher(res, rule, default=''):
+    """
+    Return the value in the first group or empty string if no match found.
+
+    @param res: result of getPage query
+    @type res: str
+    @param rule: regular expression for value matching
+    @type rule: str
+    @return: string value
+    """
+    res = res.replace('\n', '').replace(' ', '')
+    matcher = re.compile(rule)
+    match = matcher.match(res)
+    if match:
+        return match.group(1)
+    return default
+
+
+class ConfWrapper(object):
+    """
+    Wrapper for region server configuration properties.
+    """
+    def __init__(self, dump):
+        """
+        Match the needed properties to their values.
+
+        @param dump: result of getPage query
+        @type dump: str
+        """
+        self.conf = matcher(dump, r'.+<configuration>(.+)</configuration>')
+        self.handler_count = matcher(self.conf, self.rule(
+            'hbase.regionserver.handler.count'
+        ))  # Defaults to 10.
+        self.memstrore_upper_limit = matcher(self.conf, self.rule(
+            'hbase.regionserver.global.memstore.upperLimit'
+        ))  # Defaults to 0.4.
+        self.memstrore_lower_limit = matcher(self.conf, self.rule(
+            'hbase.regionserver.global.memstore.lowerLimit'
+        ))  # Defaults to 0.35.
+        self.logflush_interval = self.logflush_interval()  # Defaults to 10000.
+        self.memestore_flush_size = matcher(self.conf, self.rule(
+            'hbase.hregion.memstore.flush.size'
+        ))  # Defaults to 134217728.
+        self.max_file_size = matcher(self.conf, self.rule(
+            'hbase.hregion.max.filesize'
+        ))  # Defaults to 10737418240.
+
+    def rule(self, property_name):
+        """
+        Construct a regex rule for the specified property.
+
+        @param property_name: the name of the property to be found
+        @type property_name: str
+        @return: regex rule of string
+        """
+        return r'.+<name>{}</name><value>(.+?)</value>'.format(property_name)
+
+    def logflush_interval(self):
+        """
+        Return log flush interval value in readable format.
+        In case no value was matched, return None.
+        """
+        ms = matcher(self.conf, self.rule(
+            'hbase.regionserver.optionallogflushinterval'
+        ))
+        if ms:
+            return readable_time(int(ms) / 1000, 2)

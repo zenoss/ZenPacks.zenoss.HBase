@@ -49,6 +49,11 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'monitored'},
                 {name: 'locking'},
                 {name: 'start_code'},
+                {name: 'region_name'},
+                {name: 'handler_count'},
+                {name: 'memstrore_upper_limit'},
+                {name: 'memstrore_lower_limit'},
+                {name: 'logflush_interval'},
             ],
             columns: [{
                 id: 'severity',
@@ -58,13 +63,32 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 width: 50
             },{
                 id: 'name',
-                dataIndex: 'name',
+                dataIndex: 'region_name',
                 header: _t('Name'),
             },{
                 id: 'start_code',
                 dataIndex: 'start_code',
                 header: _t('Start Code'),
                 width: 300
+            },{
+                id: 'handler_count',
+                dataIndex: 'handler_count',
+                header: _t('Handler Count')
+            },{
+                id: 'memstrore_upper_limit',
+                dataIndex: 'memstrore_upper_limit',
+                header: _t('Memstrore Upper Limit'),
+                width: 140
+            },{
+                id: 'memstrore_lower_limit',
+                dataIndex: 'memstrore_lower_limit',
+                header: _t('Memstrore Lower Limit'),
+                width: 140
+            },{
+                id: 'logflush_interval',
+                dataIndex: 'logflush_interval',
+                header: _t('Log Flush Interval'),
+                width: 110
             },{
                 id: 'status',
                 dataIndex: 'status',
@@ -110,6 +134,8 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'locking'},
                 {name: 'start_code'},
                 {name: 'is_alive'},
+                {name: 'number_of_col_families'},
+                {name: 'col_family_block_size'},
                 {name: 'enabled'},
                 {name: 'compaction'},
             ],
@@ -123,6 +149,16 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'name',
                 dataIndex: 'name',
                 header: _t('Name'),
+            },{
+                id: 'number_of_col_families',
+                dataIndex: 'number_of_col_families',
+                header: _t('Number of Column Families'),
+                width: 150
+            },{
+                id: 'col_family_block_size',
+                dataIndex: 'col_family_block_size',
+                header: _t('Column Family Block Size'),
+                width: 200
             },{
                 id: 'compaction',
                 dataIndex: 'compaction',
@@ -173,6 +209,8 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'table'},
                 {name: 'start_key'},
                 {name: 'region_id'},
+                {name: 'memstore_flush_size'},
+                {name: 'max_file_size'},
             ],
             columns: [{
                 id: 'severity',
@@ -202,6 +240,15 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 header: _t('Region Server'),
                 renderer: Zenoss.render.linkFromGrid,
                 width: 170
+            },{
+                id: 'memstore_flush_size',
+                dataIndex: 'memstore_flush_size',
+                header: _t('Memstore Flush Size'),
+                width: 130
+            },{
+                id: 'max_file_size',
+                dataIndex: 'max_file_size',
+                header: _t('Max File Size')
             },{
                 id: 'status',
                 dataIndex: 'status',

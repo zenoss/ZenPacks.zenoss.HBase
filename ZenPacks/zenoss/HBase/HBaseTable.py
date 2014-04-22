@@ -30,10 +30,14 @@ class HBaseTable(HBaseComponent):
 
     enabled = None
     compaction = None
+    number_of_col_families = None
+    col_family_block_size = None
 
     _properties = HBaseComponent._properties + (
         {'id': 'enabled', 'type': 'string'},
         {'id': 'compaction', 'type': 'string'},
+        {'id': 'number_of_col_families', 'type': 'int'},
+        {'id': 'col_family_block_size', 'type': 'string'},
     )
 
     _relations = HBaseComponent._relations + (
@@ -55,6 +59,8 @@ class IHBaseTableInfo(IComponentInfo):
     device = schema.Entity(title=_t(u'Device'))
     enabled = schema.TextLine(title=_t(u'Enabled'))
     compaction = schema.TextLine(title=_t(u'Compaction'))
+    number_of_col_families = schema.Int(title=_t(u'Number of Column Families'))
+    pretty_col_family_block_size = schema.TextLine(title=_t(u'Column Family Block Size'))
 
 
 class HBaseTableInfo(ComponentInfo):
@@ -65,3 +71,11 @@ class HBaseTableInfo(ComponentInfo):
 
     enabled = ProxyProperty('enabled')
     compaction = ProxyProperty('compaction')
+    number_of_col_families = ProxyProperty('number_of_col_families')
+    col_family_block_size = ProxyProperty('col_family_block_size')
+
+    @property
+    @info
+    def pretty_col_family_block_size(self):
+        val = self._object.col_family_block_size
+        return val.replace("; ", "</span><br />")

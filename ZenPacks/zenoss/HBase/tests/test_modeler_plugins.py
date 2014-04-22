@@ -56,7 +56,10 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
             return
 
         modeler = HBaseCollector()
-        modeler_results = load_data('HBaseCollector.json')
+        modeler_results = dict(
+            status=load_data('HBaseCollector.json'),
+            conf=None
+        )
 
         for data_map in modeler.process(self.d, modeler_results, log):
             self.applyDataMap(self.d, data_map)
@@ -97,8 +100,8 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         table = self.d.hbase_tables._getOb('test_table')
 
         self.assertEquals(table.device().id, 'hbase.testDevice')
-        self.assertEquals(table.enabled, '')
-        self.assertEquals(table.compaction, '')
+        self.assertEquals(table.enabled, None)
+        self.assertEquals(table.compaction, None)
 
 
 def test_suite():
