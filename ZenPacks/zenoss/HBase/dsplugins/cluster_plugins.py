@@ -46,7 +46,9 @@ class HBaseMasterPlugin(HBaseBasePlugin):
 
         # Calculate the percentage of dead servers.
         overall_servers = len(self.dead) + len(self.live)
-        percent_dead_servers = len(self.dead)*100.00 / overall_servers
+        percent_dead_servers = 0.00
+        if overall_servers:
+            percent_dead_servers = len(self.dead) * 100.00 / overall_servers
 
         return {
             'live_servers': (len(self.live), 'N'),
