@@ -16,6 +16,7 @@ import zope.component
 from itertools import chain
 from twisted.internet import defer
 from twisted.web.client import getPage
+from OpenSSL.SSL import Error as SSLError
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
@@ -84,6 +85,11 @@ class HBaseCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
+        if isinstance(e, SSLError):
+            e = SSLError(
+                'Connection lost for {}. HTTPS was not configured.'.format(
+                    device.id
+                ))
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e
