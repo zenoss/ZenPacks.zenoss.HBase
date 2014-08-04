@@ -25,7 +25,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, REGIONSERVER_INFO_PORT, version_diff
+    ConfWrapper, MASTER_INFO_PORT, version_diff
 )
 
 
@@ -58,7 +58,7 @@ class HBaseCollector(PythonPlugin):
         )
         conf_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=REGIONSERVER_INFO_PORT,
+            port=MASTER_INFO_PORT,
             host=device.manageIp,
             endpoint='/dump'
         )
