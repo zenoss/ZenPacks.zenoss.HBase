@@ -16,6 +16,7 @@ import zope.component
 from itertools import chain
 from twisted.internet import defer
 from twisted.web.client import getPage
+from OpenSSL.SSL import Error as SSLError
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
@@ -24,7 +25,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, REGIONSERVER_INFO_PORT, version_diff
+    ConfWrapper, MASTER_INFO_PORT, version_diff
 )
 
 
@@ -57,7 +58,7 @@ class HBaseCollector(PythonPlugin):
         )
         conf_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=REGIONSERVER_INFO_PORT,
+            port=MASTER_INFO_PORT,
             host=device.manageIp,
             endpoint='/dump'
         )
@@ -84,6 +85,11 @@ class HBaseCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
+        if isinstance(e, SSLError):
+            e = SSLError(
+                'Connection lost for {}. HTTPS was not configured.'.format(
+                    device.id
+                ))
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e
