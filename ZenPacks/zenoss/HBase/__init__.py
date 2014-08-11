@@ -22,7 +22,7 @@ from Products.ZenModel.Device import Device
 from Products.ZenModel.ZenPack import ZenPack as ZenPackBase
 from Products.ZenRelations.RelSchema import ToManyCont, ToOne
 from Products.ZenRelations.zPropertyCategory import setzPropertyCategory
-from Products.ZenUtils.Utils import unused
+from Products.ZenUtils.Utils import unused, monkeypatch
 from Products.Zuul.interfaces import ICatalogTool
 
 unused(Globals)
@@ -158,6 +158,25 @@ def clear_events(self):
             del_filter = zep.createEventFilter(uuid=res['uuid'])
             zep.closeEventSummaries(eventFilter=del_filter)
 
+
+@monkeypatch('Products.ZenModel.Device.Device')
+def getRRDTemplates(self):
+    """
+    Returns all the templates bound to this Device and
+    add HBaseCluster monitoring template if HBaseCollector or
+    HBaseTableCollector collectors are used.
+    """
+
+    result = original(self)
+    # Check if 'HBaseCluster' monitoring template is bound to device and bind if not
+    if filter(lambda x: 'HBaseCluster' in x.id, result):
+        return result
+
+    collectors = self.getProperty('zCollectorPlugins')
+    if 'HBaseCollector' in collectors or 'HBaseTableCollector' in collectors:
+        self.bindTemplates([x.id for x in result] + ['HBaseCluster'])
+        result = original(self)
+    return result
 
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
