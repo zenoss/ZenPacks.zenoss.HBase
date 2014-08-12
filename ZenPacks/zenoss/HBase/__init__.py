@@ -31,7 +31,9 @@ unused(Globals)
 setzPropertyCategory('zHBaseScheme', 'HBase')
 setzPropertyCategory('zHBaseUsername', 'HBase')
 setzPropertyCategory('zHBasePassword', 'HBase')
-setzPropertyCategory('zHBasePort', 'HBase')
+setzPropertyCategory('zHBaseRestPort', 'HBase')
+setzPropertyCategory('zHBaseMasterPort', 'HBase')
+setzPropertyCategory('zHBaseRegionServerPort', 'HBase')
 
 # Modules containing model classes. Used by zenchkschema to validate
 # bidirectional integrity of defined relationships.
@@ -197,7 +199,9 @@ class ZenPack(ZenPackBase):
         ('zHBaseScheme', 'http', 'string'),
         ('zHBaseUsername', '', 'string'),
         ('zHBasePassword', '', 'password'),
-        ('zHBasePort', '8080', 'string'),
+        ('zHBaseRestPort', '8080', 'string'),
+        ('zHBaseMasterPort', '60010', 'string'),
+        ('zHBaseRegionServerPort', '60030', 'string'),
     ]
 
     def install(self, app):

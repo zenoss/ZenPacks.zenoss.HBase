@@ -25,7 +25,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, MASTER_INFO_PORT, version_diff
+    ConfWrapper, version_diff
 )
 
 
@@ -42,8 +42,9 @@ class HBaseCollector(PythonPlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
-        )
+        'zHBaseRestPort',
+        'zHBaseMasterPort'
+    )
 
     @defer.inlineCallbacks
     def collect(self, device, log):
@@ -52,13 +53,13 @@ class HBaseCollector(PythonPlugin):
 
         status_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=device.zHBasePort,
+            port=device.zHBaseRestPort,
             host=device.manageIp,
             endpoint='/status/cluster'
         )
         conf_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=MASTER_INFO_PORT,
+            port=device.zHBaseMasterPort,
             host=device.manageIp,
             endpoint='/dump'
         )

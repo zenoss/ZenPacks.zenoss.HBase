@@ -33,7 +33,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
+        'zHBaseRestPort',
     )
 
     component = None
@@ -92,7 +92,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         # Check the connection and collect data.
         url = hbase_rest_url(
             scheme=ds0.zHBaseScheme,
-            port=ds0.zHBasePort,
+            port=ds0.zHBaseRestPort,
             host=ds0.manageIp,
             endpoint=self.endpoint
         )
