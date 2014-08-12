@@ -37,15 +37,15 @@ class HBaseTableCollector(PythonPlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
-        )
+        'zHBaseRestPort'
+    )
 
     def collect(self, device, log):
         log.info("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=device.zHBasePort,
+            port=device.zHBaseRestPort,
             host=device.manageIp,
             endpoint='/'
         )

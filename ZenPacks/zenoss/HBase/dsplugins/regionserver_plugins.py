@@ -24,7 +24,7 @@ from ZenPacks.zenoss.HBase.dsplugins.base_plugin import (
 )
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name, version_diff,
-    REGIONSERVER_INFO_PORT, ConfWrapper, HBaseException
+    ConfWrapper, HBaseException
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -93,7 +93,8 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
 
     proxy_attributes = HBaseBasePlugin.proxy_attributes + (
         'region_ids',
-        'title'
+        'title',
+        'zHBaseRegionServerPort',
     )
 
     @defer.inlineCallbacks
@@ -113,7 +114,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             host = ds.manageIp if 'localhost' in ds.title else ds.title
             url = hbase_rest_url(
                 scheme=ds.zHBaseScheme,
-                port=REGIONSERVER_INFO_PORT,
+                port=ds.zHBaseRegionServerPort,
                 host=host,
                 endpoint='/dump'
             )

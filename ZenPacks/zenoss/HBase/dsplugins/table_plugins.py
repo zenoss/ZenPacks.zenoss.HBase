@@ -20,7 +20,7 @@ from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import convToUnits
 from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, matcher, MASTER_INFO_PORT, HBaseException
+    hbase_rest_url, hbase_headers, matcher, HBaseException
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -31,6 +31,8 @@ class HBaseTablePlugin(HBaseBasePlugin):
     Datasource plugin for HBase Table component.
     """
     endpoint = '/table.jsp?name={0}'
+
+    proxy_attributes = HBaseBasePlugin.proxy_attributes + ('zHBaseMasterPort',)
 
     @defer.inlineCallbacks
     def collect(self, config):
@@ -48,14 +50,14 @@ class HBaseTablePlugin(HBaseBasePlugin):
             # Get compaction and state of the table.
             url = hbase_rest_url(
                 scheme=ds.zHBaseScheme,
-                port=MASTER_INFO_PORT,
+                port=ds.zHBaseMasterPort,
                 host=ds.manageIp,
                 endpoint=self.endpoint.format(self.component)
             )
             # Get column family information.
             schema_url = hbase_rest_url(
                 scheme=ds.zHBaseScheme,
-                port=ds.zHBasePort,
+                port=ds.zHBaseRestPort,
                 host=ds.manageIp,
                 endpoint='/{}/schema'.format(self.component)
             )
