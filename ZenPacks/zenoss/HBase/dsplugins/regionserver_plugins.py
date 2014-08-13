@@ -110,12 +110,10 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
                 username=ds.zHBaseUsername,
                 passwd=ds.zHBasePassword
             )
-            # TODO: it's a workaround, try to find another way.
-            host = ds.manageIp if 'localhost' in ds.title else ds.title
             url = hbase_rest_url(
                 scheme=ds.zHBaseScheme,
                 port=ds.zHBaseRegionServerPort,
-                host=host,
+                host=get_host(ds),
                 endpoint='/dump'
             )
             try:
@@ -153,3 +151,79 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
                 'max_file_size': convToUnits(conf.max_file_size)
             }))
         return oms
+
+
+class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
+    """
+    Datasource plugin for HBase Region Server component.
+    """
+
+    proxy_attributes = HBaseBasePlugin.proxy_attributes + (
+        'region_ids',
+        'title',
+        'zHBaseRegionServerPort',
+    )
+
+    @defer.inlineCallbacks
+    def collect(self, config):
+        """
+        This method overrides the HBaseBasePlugin.collect method.
+        """
+        results = self.new_data()
+        for ds in config.datasources:
+            self.component = ds.component
+            headers = hbase_headers(
+                accept='application/json',
+                username=ds.zHBaseUsername,
+                passwd=ds.zHBasePassword
+            )
+            url = hbase_rest_url(
+                scheme=ds.zHBaseScheme,
+                port=ds.zHBaseRegionServerPort,
+                host=get_host(ds),
+                endpoint='/jmx'
+            )
+            try:
+                res = yield getPage(url, headers=headers)
+                if not res:
+                    raise HBaseException('No monitoring data.')
+                results['values'][ds.component] = self.form_values(res, ds)
+            except (Exception, HBaseException), e:
+                log.error("No access to page '{}': {}".format(url, e))
+        defer.returnValue(results)
+
+    def form_values(self, result, ds):
+        """
+        Parse the results of the HBase datasource.
+        """
+        # data points for different versions of HBase
+        points = {
+            'blockCacheEvictedCount': 'blockCacheEvictionCount',
+            'blockCacheHitCachingRatio': 'blockCacheExpressHitPercent',
+            'blockCacheHitRatio': 'blockCountHitPercent',
+            'callQueueLen': 'numCallsInGeneralQueue',
+            'compactionQueueSize': 'compactionQueueLength',
+            'flushQueueSize': 'flushQueueLength',
+        }
+        try:
+            data = json.loads(result)
+        except Exception:
+            raise HBaseException('Error parsing collected data.')
+
+        result = {}
+        for point in ds.points:
+            for value in data.get('beans'):
+                if value.get(point.id) is not None:
+                    result[point.id] = (value[point.id], 'N')
+                elif value.get(points.get(point.id)) is not None:
+                    result[point.id] = (value[points[point.id]], 'N')
+        return result
+
+
+def get_host(ds):
+    '''
+    Check if component title contains 'localhost', if so,
+    change it to device IP and return correct host for regionserver
+    '''
+    # TODO: it's a workaround, try to find another way.
+    return ds.manageIp if 'localhost' in ds.title else ds.title

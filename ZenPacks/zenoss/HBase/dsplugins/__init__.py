@@ -10,5 +10,5 @@
 from base_plugin import HBaseBasePlugin, HBaseException
 from cluster_plugins import HBaseMasterPlugin, HBaseMasterTablesPlugin
 from region_plugins import HBaseHRegionPlugin
-from regionserver_plugins import HBaseRegionServerPlugin, HBaseRegionServerConfPlugin
+from regionserver_plugins import HBaseRegionServerPlugin, HBaseRegionServerConfPlugin, RegionServerStatisticsJMXPlugin
 from table_plugins import HBaseTablePlugin
