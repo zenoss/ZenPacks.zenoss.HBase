@@ -32,6 +32,7 @@ HBase Region Server.png
 HBase Region.png
 HBase Table.png
 HBase Cluster graphs.png
+HBase Impact.png
 </gallery>
 == Features ==
 
@@ -48,14 +49,14 @@ They are each detailed further below.
 The following values are discovered through zProperties you provide:
 
 ; Region Servers
-: ''Attributes'': Name (DomainName:port), Start Code
+: ''Attributes'': Name (DomainName:port), Start Code, Handler Count, Memstrore Upper Limit, Memstrore Lower Limit, Log Flush Interval
 : ''Collections'': Regions
 
 ; Regions
-: ''Attributes'': Table, Start Key, Region ID
+: ''Attributes'': Table, Start Key, Region ID, Region Server, Memstore Flush Size, Max File Size
 
 ; Tables
-: ''Attributes'': Compaction, Enabled
+: ''Attributes'': Name, Number of Column Families, Column Family Block Size, Compaction, Enabled
 
 === Performance Monitoring ===
 
@@ -70,6 +71,8 @@ The following metrics will be collected and graphed every 5 minutes by default:
 : ''Memory Usage'': Heap Memory Size (MB)
 : ''Storage Statistics'': Memstore Size (MB), Storefile Index Size (MB), Storefile Size (MB)
 : ''Requests'': Read, Write
+: ''Blocks'': Block Cache Count, Block Cache Evicted Count, Block Cache Hit Ratio (%), Block Cache Hit Caching Ratio (%)
+: ''Performance metrics'': Compaction Queue Length, Flush Queue Length, Call Queue Length
 
 ; Regions
 : ''Storage Statistics'': Memstore Size (MB), Storefile Index Size (MB), Storefile Size (MB), Storefiles, Stores
@@ -111,12 +114,9 @@ Use the following steps to start monitoring HBase:
 # Select Infrastructure from the navigation bar.
 # Click the device name in the device list. The device overview page appears.
 # Select ''Configuration Properties'' from the left panel.
-# Set the ''zCommandUsername'' and ''zCommandPassword''  to setup SSH access.
 # Set the ''zHBasePassword'' and ''zHBaseUsername'' if you have Basic access authentication configured on your HBase master (otherwise those values will be disregarded).
-# Optionally set the ''zHBaseProt'' if you have your HBase rest daemon started on any other port than 8080.
+# Optionally set the ''zHBaseRestProt'', ''zHBaseMasterPort'' and ''zHBaseRegionServerPort'' if it differes from the default one.
 # Navigate to the ''Modeler plugins'' page of the device containing your HBase server, add the ''HBaseCollector'' and ''HBaseTableCollector'' modeler plugins.
-# Select ''Bind Templates'' from the Action menu. The ''Bind Templates'' dialog appears.
-# Add the ''HBaseCluster'' template to the list of selected templates, and then click ''Submit''. The HBaseCluster template is added to the list of monitoring templates.
 
 ----
 
@@ -127,8 +127,8 @@ servers you want to add. The devices shuld be added under the the tagget machine
 (e.g. '/Devices/Server/Linux' in the example below).
 
 <syntaxhighlight lang="text">
-/Devices/Server/Linux zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector'], zDeviceTemplates=['HBaseCluster']
-<HOST NAME> zHBasePort='8080', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>', zCommandUsername='<SSH_USERNAME>', zCommandPassword='<SSH_PASSWORD>'
+/Devices/Server/Linux zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector']
+<HOST NAME> zHBaseRestPort='8080', zHBaseMasterPort='60010', zHBaseRegionServerPort='60030', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>'
 </syntaxhighlight>
 
 You can then load the HBase monitoring servers into Zenoss Core or Resource Manager as devices with the following command.
@@ -147,15 +147,13 @@ Access authentication may be configured on the target machine in one of the foll
 
 This ZenPack uses the ''Apache HBase REST Interface'' for performance monitoring,
 therefore the rest daemon should be started and running on 
-the port specified in ''zHBaseProt'' zProperty.
+the port specified in ''zHBaseRestProt'' zProperty.
 
 You can start the rest daemon by executing the following command:
 
 <code>bin/hbase-daemon.sh start rest</code>
 
-Please make sure that the default ports for the HBase Master web UI (60010) 
-and Hbase Regionserver web UI (60030) were not changed in the ''hbase-default.xml'' 
-and the UI instance is running, as it is used for monitoring.
+Please make sure that the ports for the HBase Master web UI and Hbase Regionserver web UI are correctly set in ''zHBaseMasterPort'' and ''zHBaseRegionServerPort'' zProperties, and that the UI instances are running, as they are used for monitoring.
 
 == Troubleshooting ==
 
@@ -179,10 +177,10 @@ Installing this ZenPack will add the following items to your Zenoss system.
 * HBaseCollector
 * HBaseTableCollector
 ;Monitoring Templates
-* HBaseCluster (in /Server)
-* HBaseRegionServer (in /Server)
-* HBaseHRegion (in /Server)
-* HBaseTable (in /Server)
+* HBaseCluster (in /Device)
+* HBaseRegionServer (in /Device)
+* HBaseHRegion (in /Device)
+* HBaseTable (in /Device)
 ;Component Types
 * HBaseRegionServer (on related device)
 * HBaseHRegion (on HBaseRegionServer)
@@ -195,7 +193,7 @@ Installing this ZenPack will add the following items to your Zenoss system.
 !width="50%"|Name
 |-
 |Performance Collector
-|zenpython, zencommand
+|zenpython
 |}
 
 {{ZenPackFooter}}

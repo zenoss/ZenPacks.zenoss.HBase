@@ -24,7 +24,7 @@ from ZenPacks.zenoss.HBase.dsplugins.base_plugin import (
 )
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name, version_diff,
-    ConfWrapper, HBaseException
+    ConfWrapper, HBaseException, check_ssl_error
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -122,6 +122,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data.')
                 results['maps'].extend(self.add_maps(res, ds))
             except (Exception, HBaseException), e:
+                e = check_ssl_error(e, ds.device) or e
                 log.error("No access to page '{}': {}".format(url, e))
         defer.returnValue(results)
 
@@ -189,6 +190,7 @@ class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data.')
                 results['values'][ds.component] = self.form_values(res, ds)
             except (Exception, HBaseException), e:
+                e = check_ssl_error(e, ds.device) or e
                 log.error("No access to page '{}': {}".format(url, e))
         defer.returnValue(results)
 

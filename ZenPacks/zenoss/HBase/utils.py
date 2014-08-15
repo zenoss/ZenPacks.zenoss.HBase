@@ -12,6 +12,7 @@ import os
 import re
 
 from base64 import encodestring
+from OpenSSL.SSL import Error as SSLError
 from zope.event import notify
 
 from Products.AdvancedQuery import Eq, Or
@@ -191,6 +192,18 @@ def dead_node_name(node):
         return title, start_code
     except:
         return node, node
+
+
+def check_ssl_error(error, device_id):
+    '''
+    Check if error is instance of OpenSSL.SSL
+    and return instance of error with correct message
+    '''
+    if isinstance(error, SSLError):
+        return SSLError(
+            'Connection lost for {}. https was not configured.'.format(
+                device_id
+            ))
 
 
 def matcher(res, rule, default=''):

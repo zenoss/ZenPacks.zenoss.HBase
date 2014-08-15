@@ -15,7 +15,7 @@ from twisted.internet import defer
 
 from Products.ZenEvents import ZenEventClasses
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, HBaseException
+    hbase_rest_url, hbase_headers, HBaseException, check_ssl_error
 )
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
@@ -108,6 +108,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         except (Exception, HBaseException), e:
             # Send connection error event for each component.
             for ds in config.datasources:
+                e = check_ssl_error(e, ds.device) or e
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
