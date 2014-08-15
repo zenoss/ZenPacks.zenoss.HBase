@@ -16,7 +16,6 @@ import zope.component
 from itertools import chain
 from twisted.internet import defer
 from twisted.web.client import getPage
-from OpenSSL.SSL import Error as SSLError
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
@@ -25,7 +24,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, version_diff
+    ConfWrapper, version_diff, check_ssl_error
 )
 
 
@@ -48,7 +47,7 @@ class HBaseCollector(PythonPlugin):
 
     @defer.inlineCallbacks
     def collect(self, device, log):
-        log.info("Collecting data for device %s", device.id)
+        log.debug("Collecting data for device %s", device.id)
         result = {}
 
         status_url = hbase_rest_url(
@@ -78,7 +77,7 @@ class HBaseCollector(PythonPlugin):
         defer.returnValue(result)
 
     def on_success(self, log, device):
-        log.info('Successfull modeling')
+        log.debug('Successfull modeling')
         self._send_event("Successfull modeling", device.id, 0)
 
     def on_error(self, log, device, failure):
@@ -86,11 +85,7 @@ class HBaseCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
-        if isinstance(e, SSLError):
-            e = SSLError(
-                'Connection lost for {}. HTTPS was not configured.'.format(
-                    device.id
-                ))
+        e = check_ssl_error(e, device.id) or e
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e

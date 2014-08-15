@@ -14,14 +14,14 @@ import collections
 import zope.component
 from itertools import chain
 from twisted.web.client import getPage
-from OpenSSL.SSL import Error as SSLError
 
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers,\
+    check_ssl_error
 
 
 class HBaseTableCollector(PythonPlugin):
@@ -41,7 +41,7 @@ class HBaseTableCollector(PythonPlugin):
     )
 
     def collect(self, device, log):
-        log.info("Collecting data for device %s", device.id)
+        log.debug("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
             scheme=device.zHBaseScheme,
@@ -62,7 +62,7 @@ class HBaseTableCollector(PythonPlugin):
         return res
 
     def on_success(self, log, device, data):
-        log.info('Successfull modeling')
+        log.debug('Successfull modeling')
         self._send_event("Successfull modeling", device.id, 0)
         return data
 
@@ -71,11 +71,7 @@ class HBaseTableCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
-        if isinstance(e, SSLError):
-            e = SSLError(
-                'Connection lost for {}. HTTPS was not configured.'.format(
-                    device.id
-                ))
+        e = check_ssl_error(e, device.id) or e
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e
