@@ -127,7 +127,12 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
         Check for added/removed tables and return a RelationshipMap if
         any changes took place. Otherwise return empty list.
         """
-        res = json.loads(res)
+        try:
+            res = json.loads(res)
+        except ValueError:
+            log.error('Error parsing collected data for {} monitoring template'
+                      .format(ds.template))
+            res = []
         if not res:
             return []
         tables_update = set(table['name'] for table in res.get('table'))

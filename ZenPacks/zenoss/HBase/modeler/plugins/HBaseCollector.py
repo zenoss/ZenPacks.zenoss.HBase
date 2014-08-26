@@ -105,8 +105,12 @@ class HBaseCollector(PythonPlugin):
 
         # If results.conf is None, it means that the methos is called from
         # monitoring plugin and the conf properties do not need to be updated.
-        conf = ConfWrapper(results['conf']) if results['conf'] else None
-        data = json.loads(results['status'])
+        try:
+            conf = ConfWrapper(results['conf']) if results['conf'] else None
+            data = json.loads(results['status'])
+        except ValueError:
+            log.error('HBaseCollector: Error parsing collected data')
+            return
 
         # List of servers
         server_oms = []
