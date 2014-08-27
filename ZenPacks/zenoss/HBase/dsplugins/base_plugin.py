@@ -15,7 +15,7 @@ from twisted.internet import defer
 
 from Products.ZenEvents import ZenEventClasses
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, HBaseException
+    hbase_rest_url, hbase_headers, HBaseException, check_ssl_error
 )
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource \
     import PythonDataSourcePlugin
@@ -33,7 +33,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
+        'zHBaseRestPort',
     )
 
     component = None
@@ -92,7 +92,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         # Check the connection and collect data.
         url = hbase_rest_url(
             scheme=ds0.zHBaseScheme,
-            port=ds0.zHBasePort,
+            port=ds0.zHBaseRestPort,
             host=ds0.manageIp,
             endpoint=self.endpoint
         )
@@ -108,6 +108,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         except (Exception, HBaseException), e:
             # Send connection error event for each component.
             for ds in config.datasources:
+                e = check_ssl_error(e, ds.device) or e
                 results['events'].append({
                     'component': ds.component,
                     'summary': str(e),
@@ -132,13 +133,14 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         and maps.  result - is what returned from collect.
         """
         for component in result['values'].keys():
-            result['events'].append({
-                'component': component,
-                'summary': 'Monitoring ok',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Clear,
-            })
+            if result['values'][component]:
+                result['events'].append({
+                    'component': component,
+                    'summary': 'Monitoring ok',
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Clear,
+                })
         return result
 
     def onError(self, result, config):

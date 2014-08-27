@@ -537,9 +537,9 @@
           ZenPacks.zenoss.HBase.dsplugins.HBaseRegionServerConfPlugin
         </property>
       </object>
-      <object class="BasicDataSource" id="RegionServerStatisticsJMX" module="Products.ZenModel.BasicDataSource">
+      <object class="PythonDataSource" id="RegionServerStatisticsJMX" module="ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource">
         <property id="sourcetype" mode="w" select_variable="sourcetypes" type="selection">
-          COMMAND
+          Python
         </property>
         <property id="enabled" mode="w" type="boolean">
           True
@@ -547,41 +547,16 @@
         <property id="component" mode="w" type="string">
           ${here/id}
         </property>
-        <property id="eventClass" mode="w" type="string">
-          /Cmd/Fail
-        </property>
         <property id="severity" mode="w" type="int">
-          1
+          3
         </property>
-        <property id="commandTemplate" mode="w" type="string">
-          /usr/bin/curl -s http://${here/title}:60030/jmx?qry=hadoop:service=*,name=*Statistics*
-        </property>
-        <property id="cycletime" mode="w" type="int">
+        <property id="cycletime" mode="w" type="string">
           300
         </property>
-        <property id="usessh" mode="w" type="boolean">
-          True
-        </property>
-        <property id="parser" mode="w" type="string">
-          ZenPacks.zenoss.HBase.parsers.hbase_parser
+        <property id="plugin_classname" mode="w" type="string">
+          ZenPacks.zenoss.HBase.dsplugins.RegionServerStatisticsJMXPlugin
         </property>
         <tomanycont id="datapoints">
-          <object class="RRDDataPoint" id="RpcProcessingTimeAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="RpcQueueTimeAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
           <object class="RRDDataPoint" id="blockCacheCount" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
@@ -630,71 +605,7 @@
               True
             </property>
           </object>
-          <object class="RRDDataPoint" id="compactionSizeNumOps" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
           <object class="RRDDataPoint" id="flushQueueSize" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="flushSizeNumOps" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="fsPreadLatencyAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="fsReadLatencyAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="fsSyncLatencyAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="fsWriteLatencyAvgTime" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="regionSplitFailureCount" module="Products.ZenModel.RRDDataPoint">
-            <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
-              GAUGE
-            </property>
-            <property id="isrow" mode="w" type="boolean">
-              True
-            </property>
-          </object>
-          <object class="RRDDataPoint" id="regionSplitSuccessCount" module="Products.ZenModel.RRDDataPoint">
             <property id="rrdtype" mode="w" select_variable="rrdtypes" type="selection">
               GAUGE
             </property>
@@ -967,35 +878,6 @@
               AVERAGE
             </property>
           </object>
-          <object class="DataPointGraphPoint" id="compactionSizeNumOps" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              1
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf
-            </property>
-            <property id="legend" mode="w" type="string">
-              Number of Compactions
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_compactionSizeNumOps
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
         </tomanycont>
       </object>
       <object class="GraphDefinition" id="Flushes" module="Products.ZenModel.GraphDefinition">
@@ -1051,182 +933,6 @@
             </property>
             <property id="dpName" mode="w" type="string">
               RegionServerStatisticsJMX_flushQueueSize
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-          <object class="DataPointGraphPoint" id="flushSizeNumOps" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              1
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf
-            </property>
-            <property id="legend" mode="w" type="string">
-              Number of Flushes
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_flushSizeNumOps
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-        </tomanycont>
-      </object>
-      <object class="GraphDefinition" id="Latency" module="Products.ZenModel.GraphDefinition">
-        <property id="height" mode="w" type="int">
-          100
-        </property>
-        <property id="width" mode="w" type="int">
-          500
-        </property>
-        <property id="units" mode="w" type="string">
-          Milliseconds
-        </property>
-        <property id="log" mode="w" type="boolean">
-          False
-        </property>
-        <property id="base" mode="w" type="boolean">
-          False
-        </property>
-        <property id="miny" mode="w" type="int">
-          -1
-        </property>
-        <property id="maxy" mode="w" type="int">
-          -1
-        </property>
-        <property id="hasSummary" mode="w" type="boolean">
-          True
-        </property>
-        <property id="sequence" mode="w" type="long">
-          9
-        </property>
-        <tomanycont id="graphPoints">
-          <object class="DataPointGraphPoint" id="fsPreadLatencyAvgTime" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              1
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf%s
-            </property>
-            <property id="legend" mode="w" type="string">
-              FS Positional Read
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_fsPreadLatencyAvgTime
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-          <object class="DataPointGraphPoint" id="fsReadLatencyAvgTime" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              0
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf%s
-            </property>
-            <property id="legend" mode="w" type="string">
-              FS Read
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_fsReadLatencyAvgTime
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-          <object class="DataPointGraphPoint" id="fsSyncLatencyAvgTime" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              3
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf%s
-            </property>
-            <property id="legend" mode="w" type="string">
-              FS Sync
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_fsSyncLatencyAvgTime
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-          <object class="DataPointGraphPoint" id="fsWriteLatencyAvgTime" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              2
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf%s
-            </property>
-            <property id="legend" mode="w" type="string">
-              FS Write
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_fsWriteLatencyAvgTime
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE
@@ -1376,95 +1082,6 @@
             </property>
             <property id="dpName" mode="w" type="string">
               RegionServerStatisticsJMX_callQueueLen
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-        </tomanycont>
-      </object>
-      <object class="GraphDefinition" id="Region Splits" module="Products.ZenModel.GraphDefinition">
-        <property id="height" mode="w" type="int">
-          100
-        </property>
-        <property id="width" mode="w" type="int">
-          500
-        </property>
-        <property id="units" mode="w" type="string">
-          Units
-        </property>
-        <property id="log" mode="w" type="boolean">
-          False
-        </property>
-        <property id="base" mode="w" type="boolean">
-          False
-        </property>
-        <property id="miny" mode="w" type="int">
-          -1
-        </property>
-        <property id="maxy" mode="w" type="int">
-          -1
-        </property>
-        <property id="hasSummary" mode="w" type="boolean">
-          True
-        </property>
-        <property id="sequence" mode="w" type="long">
-          2
-        </property>
-        <tomanycont id="graphPoints">
-          <object class="DataPointGraphPoint" id="regionSplitFailureCount" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              1
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf
-            </property>
-            <property id="legend" mode="w" type="string">
-              Failure Splits
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_regionSplitFailureCount
-            </property>
-            <property id="cFunc" mode="w" type="string">
-              AVERAGE
-            </property>
-          </object>
-          <object class="DataPointGraphPoint" id="regionSplitSuccessCount" module="Products.ZenModel.DataPointGraphPoint">
-            <property id="sequence" mode="w" type="long">
-              0
-            </property>
-            <property id="lineType" mode="w" select_variable="lineTypes" type="selection">
-              LINE
-            </property>
-            <property id="lineWidth" mode="w" type="long">
-              1
-            </property>
-            <property id="stacked" mode="w" type="boolean">
-              False
-            </property>
-            <property id="format" mode="w" type="string">
-              %5.2lf
-            </property>
-            <property id="legend" mode="w" type="string">
-              Successful Splits
-            </property>
-            <property id="limit" mode="w" type="long">
-              -1
-            </property>
-            <property id="dpName" mode="w" type="string">
-              RegionServerStatisticsJMX_regionSplitSuccessCount
             </property>
             <property id="cFunc" mode="w" type="string">
               AVERAGE

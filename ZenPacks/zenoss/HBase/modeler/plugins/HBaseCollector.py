@@ -24,7 +24,7 @@ from Products.ZenUtils.Utils import prepId, convToUnits
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name,
-    ConfWrapper, REGIONSERVER_INFO_PORT, version_diff
+    ConfWrapper, version_diff, check_ssl_error
 )
 
 
@@ -41,23 +41,24 @@ class HBaseCollector(PythonPlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
-        )
+        'zHBaseRestPort',
+        'zHBaseMasterPort'
+    )
 
     @defer.inlineCallbacks
     def collect(self, device, log):
-        log.info("Collecting data for device %s", device.id)
+        log.debug("Collecting data for device %s", device.id)
         result = {}
 
         status_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=device.zHBasePort,
+            port=device.zHBaseRestPort,
             host=device.manageIp,
             endpoint='/status/cluster'
         )
         conf_url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=REGIONSERVER_INFO_PORT,
+            port=device.zHBaseMasterPort,
             host=device.manageIp,
             endpoint='/dump'
         )
@@ -76,7 +77,7 @@ class HBaseCollector(PythonPlugin):
         defer.returnValue(result)
 
     def on_success(self, log, device):
-        log.info('Successfull modeling')
+        log.debug('Successfull modeling')
         self._send_event("Successfull modeling", device.id, 0)
 
     def on_error(self, log, device, failure):
@@ -84,6 +85,7 @@ class HBaseCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
+        e = check_ssl_error(e, device.id) or e
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e
@@ -103,8 +105,12 @@ class HBaseCollector(PythonPlugin):
 
         # If results.conf is None, it means that the methos is called from
         # monitoring plugin and the conf properties do not need to be updated.
-        conf = ConfWrapper(results['conf']) if results['conf'] else None
-        data = json.loads(results['status'])
+        try:
+            conf = ConfWrapper(results['conf']) if results['conf'] else None
+            data = json.loads(results['status'])
+        except ValueError:
+            log.error('HBaseCollector: Error parsing collected data')
+            return
 
         # List of servers
         server_oms = []

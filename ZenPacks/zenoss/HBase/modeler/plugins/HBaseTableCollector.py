@@ -20,7 +20,8 @@ from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
 from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
-from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers
+from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers,\
+    check_ssl_error
 
 
 class HBaseTableCollector(PythonPlugin):
@@ -36,15 +37,15 @@ class HBaseTableCollector(PythonPlugin):
         'zHBaseScheme',
         'zHBaseUsername',
         'zHBasePassword',
-        'zHBasePort'
-        )
+        'zHBaseRestPort'
+    )
 
     def collect(self, device, log):
-        log.info("Collecting data for device %s", device.id)
+        log.debug("Collecting data for device %s", device.id)
 
         url = hbase_rest_url(
             scheme=device.zHBaseScheme,
-            port=device.zHBasePort,
+            port=device.zHBaseRestPort,
             host=device.manageIp,
             endpoint='/'
         )
@@ -61,7 +62,7 @@ class HBaseTableCollector(PythonPlugin):
         return res
 
     def on_success(self, log, device, data):
-        log.info('Successfull modeling')
+        log.debug('Successfull modeling')
         self._send_event("Successfull modeling", device.id, 0)
         return data
 
@@ -70,6 +71,7 @@ class HBaseTableCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
+        e = check_ssl_error(e, device.id) or e
         log.error(e)
         self._send_event(str(e).capitalize(), device.id, 5)
         raise e
@@ -83,9 +85,11 @@ class HBaseTableCollector(PythonPlugin):
         maps = collections.OrderedDict([
             ('hbase_tables', [])
         ])
-
-        data = json.loads(results)
-
+        try:
+            data = json.loads(results)
+        except ValueError:
+            log.error('HBaseTableCollector: Error parsing collected data')
+            return
         # List of tables
         tables_oms = []
         if data:  # Check if there are any tables.
