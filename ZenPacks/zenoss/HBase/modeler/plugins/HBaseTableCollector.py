@@ -85,9 +85,11 @@ class HBaseTableCollector(PythonPlugin):
         maps = collections.OrderedDict([
             ('hbase_tables', [])
         ])
-
-        data = json.loads(results)
-
+        try:
+            data = json.loads(results)
+        except ValueError:
+            log.error('HBaseTableCollector: Error parsing collected data')
+            return
         # List of tables
         tables_oms = []
         if data:  # Check if there are any tables.

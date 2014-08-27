@@ -133,13 +133,14 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         and maps.  result - is what returned from collect.
         """
         for component in result['values'].keys():
-            result['events'].append({
-                'component': component,
-                'summary': 'Monitoring ok',
-                'eventKey': 'hbase_monitoring_error',
-                'eventClass': '/Status',
-                'severity': ZenEventClasses.Clear,
-            })
+            if result['values'][component]:
+                result['events'].append({
+                    'component': component,
+                    'summary': 'Monitoring ok',
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Clear,
+                })
         return result
 
     def onError(self, result, config):
