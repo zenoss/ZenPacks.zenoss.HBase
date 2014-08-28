@@ -36,8 +36,3 @@ reinstall:
 
 pretty_xml:
 	python $(ZP_DIR)/xml_format.py $(ZP_DIR)/objects/objects.xml
-
-pep8:
-	./check_pep8.sh
-
-
