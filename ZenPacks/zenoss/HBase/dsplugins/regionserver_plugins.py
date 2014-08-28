@@ -24,7 +24,7 @@ from ZenPacks.zenoss.HBase.dsplugins.base_plugin import (
 )
 from ZenPacks.zenoss.HBase.utils import (
     hbase_rest_url, hbase_headers, dead_node_name, version_diff,
-    ConfWrapper, HBaseException, check_ssl_error
+    ConfWrapper, HBaseException, check_error
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -122,7 +122,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data.')
                 results['maps'].extend(self.add_maps(res, ds))
             except (Exception, HBaseException), e:
-                e = check_ssl_error(e, ds.device) or e
+                e = check_error(e, ds.device) or e
                 log.error("No access to page '{}': {}".format(url, e))
         defer.returnValue(results)
 
@@ -190,8 +190,17 @@ class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data.')
                 results['values'][ds.component] = self.form_values(res, ds)
             except (Exception, HBaseException), e:
-                e = check_ssl_error(e, ds.device) or e
-                log.error("No access to page '{}': {}".format(url, e))
+                e = check_error(e, ds.device) or e
+                msg = "No access to page '{}': {}".format(url, e)
+                results['events'].append({
+                    'component': self.component,
+                    'summary': str(e),
+                    'message': msg,
+                    'eventKey': 'hbase_monitoring_error',
+                    'eventClass': '/Status',
+                    'severity': ZenEventClasses.Info,
+                })
+                log.error(msg)
         defer.returnValue(results)
 
     def form_values(self, result, ds):

@@ -20,7 +20,7 @@ from Products.ZenEvents import ZenEventClasses
 from Products.ZenUtils.Utils import convToUnits
 from ZenPacks.zenoss.HBase.dsplugins.base_plugin import HBaseBasePlugin
 from ZenPacks.zenoss.HBase.utils import (
-    hbase_rest_url, hbase_headers, matcher, HBaseException, check_ssl_error
+    hbase_rest_url, hbase_headers, matcher, HBaseException, check_error
 )
 
 log = getLogger('zen.HBasePlugins')
@@ -71,7 +71,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
                 results['maps'].extend(self.add_maps(res, schema, ds))
                 results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
-                e = check_ssl_error(e, ds.device) or e
+                e = check_error(e, ds.device) or e
                 summary = str(e)
                 if '500' in summary:
                     summary = "The table '{0}' is broken or does not " \
