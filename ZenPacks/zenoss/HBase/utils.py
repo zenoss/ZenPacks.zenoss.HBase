@@ -20,6 +20,8 @@ from Products.ZenUtils.Utils import prepId, readable_time
 from Products.Zuul.interfaces import ICatalogTool
 from Products.Zuul.catalog.events import IndexingEvent
 
+from twisted.internet.error import ConnectionRefusedError
+
 
 class HBaseException(Exception):
     """
@@ -194,16 +196,22 @@ def dead_node_name(node):
         return node, node
 
 
-def check_ssl_error(error, device_id):
+def check_error(error, device_id):
     '''
-    Check if error is instance of OpenSSL.SSL
+    Check if error is instance of OpenSSL.SSL or Connection Error
     and return instance of error with correct message
     '''
     if isinstance(error, SSLError):
         return SSLError(
-            'Connection lost for {}. https was not configured.'.format(
+            'Connection lost for {}. HTTPS was not configured'.format(
                 device_id
             ))
+    elif str(error).startswith('404') or str(error).startswith('405') \
+            or isinstance(error, ConnectionRefusedError):
+        return HBaseException(
+            'The modeling failed due to connection issue. Verify the values of'
+            ' zHBaseRestPort, zHBaseMasterPort'
+            ' and zHBaseRegionServerPort and re-try')
 
 
 def matcher(res, rule, default=''):

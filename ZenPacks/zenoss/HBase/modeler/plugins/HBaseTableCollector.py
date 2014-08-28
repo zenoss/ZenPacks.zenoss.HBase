@@ -21,7 +21,7 @@ from Products.ZenCollector.interfaces import IEventService
 from Products.ZenUtils.Utils import prepId
 from ZenPacks.zenoss.HBase import MODULE_NAME, NAME_SPLITTER
 from ZenPacks.zenoss.HBase.utils import hbase_rest_url, hbase_headers,\
-    check_ssl_error
+    check_error
 
 
 class HBaseTableCollector(PythonPlugin):
@@ -71,9 +71,9 @@ class HBaseTableCollector(PythonPlugin):
             e = failure.value
         except:
             e = failure  # no twisted failure
-        e = check_ssl_error(e, device.id) or e
+        e = check_error(e, device.id) or e
         log.error(e)
-        self._send_event(str(e).capitalize(), device.id, 5)
+        self._send_event(str(e), device.id, 5)
         raise e
 
     def process(self, device, results, log):
@@ -131,9 +131,9 @@ class HBaseTableCollector(PythonPlugin):
                 summary=reason,
                 eventClass='/Status',
                 device=id,
-                eventKey='ConnectionError',
+                eventKey='HBaseTableCollector_ConnectionError',
                 severity=severity,
-                ))
+            ))
             return True
         else:
             if force or (severity > 0):

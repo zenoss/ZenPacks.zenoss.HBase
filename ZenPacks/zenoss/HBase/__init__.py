@@ -228,6 +228,30 @@ class ZenPack(ZenPackBase):
 
         super(ZenPack, self).remove(app, leaveObjects=leaveObjects)
 
+    def removeZProperties(self, app):
+        """
+        Remove any zProperties defined in the ZenPack
+
+        @param app: ZenPack
+        @type app: ZenPack object
+        """
+        for name, value, pType in self.packZProperties:
+            # Remove zHBaseMasterPort property only
+            # if Hadoop ZenPack is not installed
+            if name == 'zHBaseMasterPort':
+                try:
+                    self.dmd.ZenPackManager.packs._getOb(
+                        'ZenPacks.zenoss.Hadoop'
+                    )
+                    continue
+                except AttributeError:
+                    log.debug('Removing zHBaseMasterPort property')
+
+            try:
+                app.zport.dmd.Devices._delProperty(name)
+            except ValueError:
+                pass
+
     def _buildDeviceRelations(self):
         for d in self.dmd.Devices.getSubDevicesGen():
             d.buildRelations()
