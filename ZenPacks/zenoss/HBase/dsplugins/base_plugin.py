@@ -114,7 +114,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'summary': str(e),
                     'eventKey': 'hbase_monitoring_error',
                     'eventClass': '/Status',
-                    'severity': ZenEventClasses.Critical,
+                    'severity': ZenEventClasses.Error,
                 })
             defer.returnValue(results)
         # Process returned data.
