@@ -81,7 +81,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
                     'summary': summary,
                     'eventKey': 'hbase_monitoring_error',
                     'eventClass': '/Status',
-                    'severity': ZenEventClasses.Critical,
+                    'severity': ZenEventClasses.Error,
                 })
         defer.returnValue(results)
 
