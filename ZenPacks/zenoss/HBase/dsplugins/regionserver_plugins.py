@@ -198,7 +198,7 @@ class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
                     'message': msg,
                     'eventKey': 'hbase_monitoring_error',
                     'eventClass': '/Status',
-                    'severity': ZenEventClasses.Info,
+                    'severity': ZenEventClasses.Error,
                 })
                 log.error(msg)
         defer.returnValue(results)
