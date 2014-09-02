@@ -71,11 +71,11 @@ class HBaseTablePlugin(HBaseBasePlugin):
                 results['maps'].extend(self.add_maps(res, schema, ds))
                 results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
-                e = check_error(e, ds.device) or e
-                summary = str(e)
-                if '500' in summary:
+                if any(code in str(e) for code in ('404', '500')):
                     summary = "The table '{0}' is broken or does not " \
                         "exist.".format(ds.component)
+                else:
+                    summary = str(check_error(e, ds.device) or e)
                 results['events'].append({
                     'component': ds.component,
                     'summary': summary,
