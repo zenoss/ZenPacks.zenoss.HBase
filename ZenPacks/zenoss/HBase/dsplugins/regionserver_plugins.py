@@ -77,7 +77,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
                     or ZenEventClasses.Clear)
         return [{
             'component': self.component,
-            'summary': "Region server '{0}' is dead.".format(
+            'summary': "Region server '{0}' is dead".format(
                 self.component.replace('_', ':')),
             'eventKey': 'hbase_regionserver_monitoring_error',
             'eventClass': '/Status',
@@ -119,7 +119,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             try:
                 res = yield getPage(url, headers=headers)
                 if not res:
-                    raise HBaseException('No monitoring data.')
+                    raise HBaseException('No monitoring data')
                 results['maps'].extend(self.add_maps(res, ds))
             except (Exception, HBaseException), e:
                 e = check_error(e, ds.device) or e

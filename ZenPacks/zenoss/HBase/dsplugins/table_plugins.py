@@ -73,7 +73,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
             except (Exception, HBaseException), e:
                 if any(code in str(e) for code in ('404', '500')):
                     summary = "The table '{0}' is broken or does not " \
-                        "exist.".format(ds.component)
+                        "exist".format(ds.component)
                 else:
                     summary = str(check_error(e, ds.device) or e)
                 results['events'].append({
@@ -124,9 +124,9 @@ class HBaseTablePlugin(HBaseBasePlugin):
         enabled = matcher(result, r'.+<td>Enabled</td><td>(\w+)</td>')
         summary = 'Monitoring ok'
         if enabled != 'true':
-            summary = "The table '{0}' is disabled.".format(self.component)
+            summary = "The table '{0}' is disabled".format(self.component)
         if not enabled:
-            summary = "The table '{0}' is dropped.".format(self.component)
+            summary = "The table '{0}' is dropped".format(self.component)
         # Send error or clear event.
         severity = ((summary != 'Monitoring ok') and ZenEventClasses.Error
                     or ZenEventClasses.Clear)

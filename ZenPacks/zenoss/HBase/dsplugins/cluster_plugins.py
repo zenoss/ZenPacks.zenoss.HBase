@@ -97,14 +97,14 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         for server in self.added:
             events.append({
                 # 'component': server,
-                'summary': "Region server '{0}' is added.".format(
+                'summary': "Region server '{0}' is added".format(
                     server.replace('_', ':')),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })
         for server in self.removed:
             events.append({
-                'summary': "Region server '{0}' is removed.".format(
+                'summary': "Region server '{0}' is removed".format(
                     server.replace('_', ':')),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
@@ -163,13 +163,13 @@ class HBaseMasterTablesPlugin(HBaseBasePlugin):
         for table in self.added:
             events.append({
                 # 'component': table,
-                'summary': "The table '{0}' is added.".format(table),
+                'summary': "The table '{0}' is added".format(table),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })
         for table in self.removed:
             events.append({
-                'summary': "The table '{0}' is removed.".format(table),
+                'summary': "The table '{0}' is removed".format(table),
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Info,
             })
