@@ -42,7 +42,7 @@ class TestHBaseMasterPlugin(BaseTestCase):
             'eventClass': '/Status',
             # 'component': 'localhost_44451',
             'severity': 2,
-            'summary': "Region server 'localhost:44451' is added."
+            'summary': "Region server 'localhost:44451' is added"
         }, result)
         # Check event for removed server.
         ds.regionserver_ids = ['localhost_11111', 'test']
@@ -50,7 +50,7 @@ class TestHBaseMasterPlugin(BaseTestCase):
         self.assertIn({
             'eventClass': '/Status',
             'severity': 2,
-            'summary': "Region server 'test' is removed."
+            'summary': "Region server 'test' is removed"
         }, self.plugin.get_events(data, ds))
 
     def test_process(self):
@@ -130,7 +130,7 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
             'component': 'localhost_11111',
             'eventKey': 'hbase_regionserver_monitoring_error',
             'severity': 4,
-            'summary': "Region server 'localhost:11111' is dead."
+            'summary': "Region server 'localhost:11111' is dead"
         }, result)
         # Check clear event for dead server.
         self.plugin.component = 'localhost_44451'
@@ -139,7 +139,7 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
             'component': 'localhost_44451',
             'eventKey': 'hbase_regionserver_monitoring_error',
             'severity': 0,
-            'summary': "Region server 'localhost:44451' is dead."
+            'summary': "Region server 'localhost:44451' is dead"
         }, self.plugin.get_events(data, ds))
 
     def test_add_maps(self):
@@ -209,7 +209,7 @@ class TestHBaseTablePlugin(BaseTestCase):
             'eventClass': '/Status',
             'component': sentinel.component,
             'eventKey': 'hbase_table_monitoring_error',
-            'summary': "The table 'sentinel.component' is disabled."
+            'summary': "The table 'sentinel.component' is disabled"
         }, result)
 
     def test_get_events_clear(self):
