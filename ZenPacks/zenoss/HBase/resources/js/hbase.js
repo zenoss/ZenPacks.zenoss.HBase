@@ -52,8 +52,8 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'start_code'},
                 {name: 'region_name'},
                 {name: 'handler_count'},
-                {name: 'memstrore_upper_limit'},
-                {name: 'memstrore_lower_limit'},
+                {name: 'memstore_upper_limit'},
+                {name: 'memstore_lower_limit'},
                 {name: 'logflush_interval'}
             ],
             columns: [{
@@ -76,14 +76,14 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 dataIndex: 'handler_count',
                 header: _t('Handler Count')
             },{
-                id: 'memstrore_upper_limit',
-                dataIndex: 'memstrore_upper_limit',
-                header: _t('Memstrore Upper Limit'),
+                id: 'memstore_upper_limit',
+                dataIndex: 'memstore_upper_limit',
+                header: _t('Memstore Upper Limit'),
                 width: 140
             },{
-                id: 'memstrore_lower_limit',
-                dataIndex: 'memstrore_lower_limit',
-                header: _t('Memstrore Lower Limit'),
+                id: 'memstore_lower_limit',
+                dataIndex: 'memstore_lower_limit',
+                header: _t('Memstore Lower Limit'),
                 width: 140
             },{
                 id: 'logflush_interval',

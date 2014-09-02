@@ -137,8 +137,8 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             "compname": "hbase_servers/{}".format(self.component),
             "modname": "Region Server conf",
             'handler_count': conf.handler_count,
-            'memstrore_upper_limit': conf.memstrore_upper_limit,
-            'memstrore_lower_limit': conf.memstrore_lower_limit,
+            'memstore_upper_limit': conf.memstore_upper_limit,
+            'memstore_lower_limit': conf.memstore_lower_limit,
             'logflush_interval': conf.logflush_interval
         }))
         # All the regions within the region server will have the same
