@@ -277,6 +277,6 @@ class ConfWrapper(object):
         """
         ms = matcher(self.conf, self.rule(
             'hbase.regionserver.optionallogflushinterval'
-        ))
+        ), 1000)  # Set to default if not set in conf file.
         if ms:
             return readable_time(int(ms) / 1000, 2)
