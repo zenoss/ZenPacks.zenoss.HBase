@@ -164,8 +164,8 @@ class HBaseCollector(PythonPlugin):
         if conf:
             object_map.update({
                 'handler_count': conf.handler_count,
-                'memstrore_upper_limit': conf.memstrore_upper_limit,
-                'memstrore_lower_limit': conf.memstrore_lower_limit,
+                'memstore_upper_limit': conf.memstore_upper_limit,
+                'memstore_lower_limit': conf.memstore_lower_limit,
                 'logflush_interval': conf.logflush_interval
             })
         return ObjectMap(object_map)
