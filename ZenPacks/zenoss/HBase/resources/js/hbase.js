@@ -31,6 +31,7 @@ Ext.apply(Zenoss.render, {
     }
 });
 
+
 /* HBaseRegionServer */
 ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
     subComponentGridPanel: false,
@@ -51,9 +52,9 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'start_code'},
                 {name: 'region_name'},
                 {name: 'handler_count'},
-                {name: 'memstrore_upper_limit'},
-                {name: 'memstrore_lower_limit'},
-                {name: 'logflush_interval'},
+                {name: 'memstore_upper_limit'},
+                {name: 'memstore_lower_limit'},
+                {name: 'logflush_interval'}
             ],
             columns: [{
                 id: 'severity',
@@ -64,7 +65,7 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
             },{
                 id: 'name',
                 dataIndex: 'region_name',
-                header: _t('Name'),
+                header: _t('Name')
             },{
                 id: 'start_code',
                 dataIndex: 'start_code',
@@ -75,14 +76,14 @@ ZC.HBaseRegionServerPanel = Ext.extend(ZC.ComponentGridPanel, {
                 dataIndex: 'handler_count',
                 header: _t('Handler Count')
             },{
-                id: 'memstrore_upper_limit',
-                dataIndex: 'memstrore_upper_limit',
-                header: _t('Memstrore Upper Limit'),
+                id: 'memstore_upper_limit',
+                dataIndex: 'memstore_upper_limit',
+                header: _t('Memstore Upper Limit'),
                 width: 140
             },{
-                id: 'memstrore_lower_limit',
-                dataIndex: 'memstrore_lower_limit',
-                header: _t('Memstrore Lower Limit'),
+                id: 'memstore_lower_limit',
+                dataIndex: 'memstore_lower_limit',
+                header: _t('Memstore Lower Limit'),
                 width: 140
             },{
                 id: 'logflush_interval',
@@ -137,7 +138,7 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'number_of_col_families'},
                 {name: 'col_family_block_size'},
                 {name: 'enabled'},
-                {name: 'compaction'},
+                {name: 'compaction'}
             ],
             columns: [{
                 id: 'severity',
@@ -148,7 +149,7 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
             },{
                 id: 'name',
                 dataIndex: 'name',
-                header: _t('Name'),
+                header: _t('Name')
             },{
                 id: 'number_of_col_families',
                 dataIndex: 'number_of_col_families',
@@ -162,7 +163,7 @@ ZC.HBaseTablePanel = Ext.extend(ZC.ComponentGridPanel, {
             },{
                 id: 'compaction',
                 dataIndex: 'compaction',
-                header: _t('Compaction'),
+                header: _t('Compaction')
             },{
                 id: 'enabled',
                 dataIndex: 'enabled',
@@ -210,7 +211,7 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 {name: 'start_key'},
                 {name: 'region_id'},
                 {name: 'memstore_flush_size'},
-                {name: 'max_file_size'},
+                {name: 'max_file_size'}
             ],
             columns: [{
                 id: 'severity',
@@ -232,8 +233,8 @@ ZC.HBaseHRegionPanel = Ext.extend(ZC.ComponentGridPanel, {
                 id: 'region_id',
                 dataIndex: 'region_id',
                 header: _t('Region ID'),
-                width: 290,
                 renderer: Zenoss.render.linkFromSubgrid,
+                width: 290
             },{
                 id: 'server',
                 dataIndex: 'server',
@@ -293,5 +294,28 @@ Zenoss.nav.appendTo('Component', [{
         ZC.HBaseHRegionPanel.superclass.setContext.apply(this, [uid]);
     }
 }]);
+
+
+/* Select Field for zHBaseScheme */
+Zenoss.form.SelectScheme = Ext.extend(Ext.form.ComboBox, {
+    constructor: function(config){
+        Ext.applyIf(config, {
+            editable: false,
+            allowBlank: false,
+            triggerAction: 'all',
+            typeAhead: false,
+            forceSelection: true,
+            store: ['http', 'https']
+        });
+        Zenoss.form.Select.superclass.constructor.call(this, config);
+    }
+});
+/* Ext.version will be defined in ExtJS3 and undefined in ExtJS4. */
+Zenoss.zproperties.registerZPropertyType('scheme', {xtype: 'scheme'});
+if (Ext.version === undefined) {
+    Ext.reg('scheme', 'Zenoss.form.SelectScheme');
+} else {
+    Ext.reg('scheme', Zenoss.form.SelectScheme);
+}
 
 })();

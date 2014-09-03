@@ -225,8 +225,7 @@ def matcher(res, rule, default=''):
     @return: string value
     """
     res = res.replace('\n', '').replace(' ', '')
-    matcher = re.compile(rule)
-    match = matcher.match(res)
+    match = re.match(rule, res)
     if match:
         return match.group(1)
     return default
@@ -247,10 +246,10 @@ class ConfWrapper(object):
         self.handler_count = matcher(self.conf, self.rule(
             'hbase.regionserver.handler.count'
         ))  # Defaults to 10.
-        self.memstrore_upper_limit = matcher(self.conf, self.rule(
+        self.memstore_upper_limit = matcher(self.conf, self.rule(
             'hbase.regionserver.global.memstore.upperLimit'
         ))  # Defaults to 0.4.
-        self.memstrore_lower_limit = matcher(self.conf, self.rule(
+        self.memstore_lower_limit = matcher(self.conf, self.rule(
             'hbase.regionserver.global.memstore.lowerLimit'
         ))  # Defaults to 0.35.
         self.logflush_interval = self.logflush_interval()  # Defaults to 10000.
@@ -278,6 +277,6 @@ class ConfWrapper(object):
         """
         ms = matcher(self.conf, self.rule(
             'hbase.regionserver.optionallogflushinterval'
-        ))
+        ), 1000)  # Set to default if not set in conf file.
         if ms:
             return readable_time(int(ms) / 1000, 2)

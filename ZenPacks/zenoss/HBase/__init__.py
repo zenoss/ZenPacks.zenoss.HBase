@@ -180,6 +180,7 @@ def getRRDTemplates(self):
         result = original(self)
     return result
 
+
 Device.setErrorNotification = setErrorNotification
 Device.getErrorNotification = getErrorNotification
 Device.regionserver_ids = property(regionservers)
@@ -196,7 +197,7 @@ class ZenPack(ZenPackBase):
     """
 
     packZProperties = [
-        ('zHBaseScheme', 'http', 'string'),
+        ('zHBaseScheme', 'http', 'scheme'),
         ('zHBaseUsername', '', 'string'),
         ('zHBasePassword', '', 'password'),
         ('zHBaseRestPort', '8080', 'string'),

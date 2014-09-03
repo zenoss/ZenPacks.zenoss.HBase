@@ -104,7 +104,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         try:
             res = yield getPage(url, headers=headers)
             if not res:
-                raise HBaseException('No monitoring data.')
+                raise HBaseException('No monitoring data')
         except (Exception, HBaseException), e:
             # Send connection error event for each component.
             for ds in config.datasources:
@@ -114,7 +114,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
                     'summary': str(e),
                     'eventKey': 'hbase_monitoring_error',
                     'eventClass': '/Status',
-                    'severity': ZenEventClasses.Critical,
+                    'severity': ZenEventClasses.Error,
                 })
             defer.returnValue(results)
         # Process returned data.
