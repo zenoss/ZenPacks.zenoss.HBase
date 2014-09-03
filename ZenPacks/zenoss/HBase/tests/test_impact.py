@@ -101,8 +101,7 @@ class TestImpact(BaseTestCase):
 
         impacts, impacted_by = impacts_for(region_server)
 
-        self.assertTrue('hbase_test_device' in impacts)
-        self.assertTrue('region0-0' in impacted_by)
+        self.assertTrue('hbase_test_device' in impacted_by)
 
     @require_impact
     def test_HBaseHRegionImpacts(self):
@@ -110,14 +109,14 @@ class TestImpact(BaseTestCase):
             'hbase_servers/region_server0/regions/region0-0')
 
         impacts, impacted_by = impacts_for(region)
-
-        self.assertTrue('region_server0' in impacts)
+        self.assertTrue('region_server0' in impacted_by)
 
     @require_impact
     def test_HBaseTableImpacts(self):
+        region = self.device().getObjByPath(
+            'hbase_servers/region_server0/regions/region0-0')
+        region.table = 'table0'
         table = self.device().getObjByPath(
             'hbase_tables/table0')
-
         impacts, impacted_by = impacts_for(table)
-
-        self.assertTrue('hbase_test_device' in impacts)
+        self.assertTrue('region0-0' in impacted_by)
