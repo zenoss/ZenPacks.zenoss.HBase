@@ -114,6 +114,7 @@ class BaseRelationsProvider(object):
                     yield edge(guid(obj), self.guid())
 
     def getEdges(self):
+        device = self._object.device()
         if self.impact_relationships is not None:
             for impact_relationship in self.impact_relationships:
                 for impact in self.impact(impact_relationship):
@@ -121,6 +122,12 @@ class BaseRelationsProvider(object):
 
         if self.impacted_by_relationships is not None:
             for impacted_by_relationship in self.impacted_by_relationships:
+                # Check if zookeeper component is on device and
+                # use it instead 'hbase host'
+                if impacted_by_relationship == 'hbase_host' and\
+                        hasattr(device, 'zookeepers') and\
+                        getattr(device, 'zookeepers')():
+                    impacted_by_relationship = 'zookeepers'
                 for impacted_by in self.impacted_by(impacted_by_relationship):
                     yield impacted_by
 
@@ -136,17 +143,25 @@ class BaseTriggers(object):
 # Impact relationships
 
 class HBaseRegionServerRelationsProvider(BaseRelationsProvider):
-    # impacted_by_relationships = ['hbase_host', 'regions']
-    # impact_relationships = ['hbase_host', 'regions']
-    impacted_by_relationships = ['regions']
-    impact_relationships = ['hbase_host']
+    impacted_by_relationships = ['hbase_host']
 
 
 class HBaseHRegionRelationsProvider(BaseRelationsProvider):
-    # impacted_by_relationships = ['server']
-    impact_relationships = ['server']
+    impacted_by_relationships = ['server']
 
 
 class HBaseTableRelationsProvider(BaseRelationsProvider):
-    # impacted_by_relationships = ['hbase_host']
-    impact_relationships = ['hbase_host']
+
+    def getEdges(self):
+        for impact in super(HBaseTableRelationsProvider, self).getEdges():
+            yield impact
+
+        component = self._object
+        # Get all regions from all region servers
+        regions = [
+            r for s in component.device().hbase_servers() for r in s.regions()
+        ]
+        # Add impacted by 'region' relation for tables
+        for hbr in regions:
+            if hbr.table == component.id:
+                yield edge(guid(hbr), self.guid())
