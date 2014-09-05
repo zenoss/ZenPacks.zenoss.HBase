@@ -86,6 +86,7 @@ The following events will be triggered with respect to the monitored metrics:
 : ''Warning'': The Memstore Size is nearing or exceeding its flush size (128MB by default).
 : ''Warning'': The Storefile Size is nearing or exceeding the recommended maximum size (10GB by default).
 ; Tables
+: ''Info'': New table is added.
 : ''Error'': Connection refused/Credentials not valid.
 : ''Error'': The table is disabled or dropped.
 
@@ -121,8 +122,8 @@ servers you want to add. The devices should be added under the target machine de
 (e.g. '/Devices/Server/Linux' in the example below).
 
 <syntaxhighlight lang="text">
-/Devices/Server/Linux zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector']
-<HOST NAME> zHBaseRestPort='8080', zHBaseMasterPort='60010', zHBaseRegionServerPort='60030', zHBasePassword='<PASSWORD>', zHBaseUsername='<USERNAME>', zHBaseScheme='<http(s)>'
+/Devices/Server/Linux <HOST NAME or IP>
+zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector'], zHBaseRestPort='8080', zHBaseMasterPort='60010', zHBaseRegionServerPort='60030', zHBasePassword='', zHBaseUsername='', zHBaseScheme='<http(s)>'
 </syntaxhighlight>
 
 You can then load the HBase monitoring servers into Zenoss Core or Resource Manager as devices with the following command.
@@ -138,7 +139,7 @@ Access authentication may be configured on the target machine in one of the foll
 == Prerequisites ==
 This ZenPack uses the ''Apache HBase REST Interface'' for performance monitoring,
 therefore the rest daemon should be started and running on 
-the port specified in ''zHBaseRestProt'' zProperty.
+the port specified in ''zHBaseRestPort'' zProperty.
 
 You can start the rest daemon by executing the following command:
 <code>bin/hbase-daemon.sh start rest</code>
@@ -179,5 +180,9 @@ Installing this ZenPack will add the following items to your Zenoss system.
 |Performance Collector
 |zenpython
 |}
+
+== Changes ==
+;1.0.0
+* Initial release
 
 {{ZenPackFooter}}
