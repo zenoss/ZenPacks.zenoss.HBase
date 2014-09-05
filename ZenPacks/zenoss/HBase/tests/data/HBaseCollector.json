@@ -1,0 +1,34 @@
+{
+    "regions": 2, 
+    "DeadNodes": [
+        "localhost,11111,1394099998589"
+    ], 
+    "requests": 0, 
+    "LiveNodes": [
+        {
+            "name": "localhost:44451", 
+            "heapSizeMB": 26, 
+            "Region": [
+                {
+                    "stores": 1, 
+                    "currentCompactedKVs": 8, 
+                    "storefileSizeMB": 0, 
+                    "readRequestsCount": 9, 
+                    "rootIndexSizeKB": 0, 
+                    "name": "LVJPT1QtLCww", 
+                    "memstoreSizeMB": 0, 
+                    "storefiles": 1, 
+                    "totalCompactingKVs": 8, 
+                    "writeRequestsCount": 1, 
+                    "totalStaticIndexSizeKB": 0, 
+                    "storefileIndexSizeMB": 0, 
+                    "totalStaticBloomSizeKB": 0
+                }
+            ], 
+            "requests": 0, 
+            "startCode": 1111, 
+            "maxHeapSizeMB": 997
+        }
+    ], 
+    "averageLoad": 2.0
+}
