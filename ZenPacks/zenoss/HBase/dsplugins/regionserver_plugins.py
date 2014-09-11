@@ -95,6 +95,7 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
         'region_ids',
         'title',
         'zHBaseRegionServerPort',
+        'check_zookeeper',
     )
 
     @defer.inlineCallbacks
@@ -139,7 +140,8 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
             'handler_count': conf.handler_count,
             'memstore_upper_limit': conf.memstore_upper_limit,
             'memstore_lower_limit': conf.memstore_lower_limit,
-            'logflush_interval': conf.logflush_interval
+            'logflush_interval': conf.logflush_interval,
+            'remodel': ds.check_zookeeper
         }))
         # All the regions within the region server will have the same
         # configuration as set in the region server's conf file.

@@ -34,6 +34,8 @@ class HBaseRegionServer(HBaseComponent):
     memstore_upper_limit = None
     memstore_lower_limit = None
     logflush_interval = None
+    # remodel component if ZooKeeper added or removed
+    remodel = None
 
     _properties = HBaseComponent._properties + (
         {'id': 'start_code', 'type': 'string'},
@@ -54,6 +56,14 @@ class HBaseRegionServer(HBaseComponent):
 
     def device(self):
         return self.hbase_host()
+
+    def check_zookeeper(self):
+        '''
+        Check if ZooKeeper component is on device
+        '''
+        if hasattr(self.hbase_host(), 'zookeepers') and \
+                getattr(self.hbase_host(), 'zookeepers')():
+            return True
 
 
 class IHBaseRegionServerInfo(IComponentInfo):

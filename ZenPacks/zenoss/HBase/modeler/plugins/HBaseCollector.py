@@ -62,6 +62,12 @@ class HBaseCollector(PythonPlugin):
             host=device.manageIp,
             endpoint='/dump'
         )
+        table_url = hbase_rest_url(
+            scheme=device.zHBaseScheme,
+            port=device.zHBaseRestPort,
+            host=device.manageIp,
+            endpoint='/'
+        )
         headers = hbase_headers(
             accept='application/json',
             username=device.zHBaseUsername,
@@ -70,6 +76,7 @@ class HBaseCollector(PythonPlugin):
         try:
             result['status'] = yield getPage(status_url, headers=headers)
             result['conf'] = yield getPage(conf_url, headers=headers)
+            result['tables'] = yield getPage(table_url, headers=headers)
         except Exception, f:
             self.on_error(log, device, f)
 
@@ -107,34 +114,47 @@ class HBaseCollector(PythonPlugin):
         try:
             conf = ConfWrapper(results['conf']) if results['conf'] else None
             data = json.loads(results['status'])
+            tables = json.loads(results['tables'])
         except ValueError:
             log.error('HBaseCollector: Error parsing collected data')
             return
 
         # List of servers
         server_oms = []
-        for node in version_diff(data["LiveNodes"]):
-            node_id = prepId(node['name'])
-            server_oms.append(self._node_om(node, conf, True))
+        if data:
+            for node in version_diff(data["LiveNodes"]):
+                node_id = prepId(node['name'])
+                server_oms.append(self._node_om(node, conf, True))
 
-            # List of regions
-            region_oms = []
-            for region in node["Region"]:
-                region_oms.append(self._region_om(region, node_id, conf))
+                # List of regions
+                region_oms = []
+                for region in node["Region"]:
+                    region_oms.append(self._region_om(region, node_id, conf))
 
-            maps['regions'].append(RelationshipMap(
-                compname='hbase_servers/%s' % node_id,
-                relname='regions',
-                modname=MODULE_NAME['HBaseHRegion'],
-                objmaps=region_oms))
+                maps['regions'].append(RelationshipMap(
+                    compname='hbase_servers/%s' % node_id,
+                    relname='regions',
+                    modname=MODULE_NAME['HBaseHRegion'],
+                    objmaps=region_oms))
 
-        for node in version_diff(data["DeadNodes"]):
-            server_oms.append(self._node_om(node, conf))
+            for node in version_diff(data["DeadNodes"]):
+                server_oms.append(self._node_om(node, conf))
 
-        maps['hbase_servers'].append(RelationshipMap(
-            relname='hbase_servers',
-            modname=MODULE_NAME['HBaseRegionServer'],
-            objmaps=server_oms))
+            maps['hbase_servers'].append(RelationshipMap(
+                relname='hbase_servers',
+                modname=MODULE_NAME['HBaseRegionServer'],
+                objmaps=server_oms))
+
+         # List of tables
+        tables_oms = []
+        if tables:  # Check if there are any tables.
+            for table in tables["table"]:
+                tables_oms.append(self._table_om(table))
+
+            maps['hbase_tables'].append(RelationshipMap(
+                relname='hbase_tables',
+                modname=MODULE_NAME['HBaseTable'],
+                objmaps=tables_oms))
 
         # Clear non-existing component events.
         maps['device'].append(ObjectMap({
@@ -188,6 +208,19 @@ class HBaseCollector(PythonPlugin):
                 'max_file_size': convToUnits(conf.max_file_size)
             })
         return ObjectMap(object_map)
+
+    def _table_om(self, table):
+        """Builds HBase Region Server object map"""
+
+        return ObjectMap({
+            'id': prepId(table['name']),
+            'title': table['name'],
+            # The following properties will be updated on monitoring.
+            # 'compaction': 'NONE',
+            # 'enabled': 'true',
+            # 'number_of_col_families': '',
+            # 'col_family_block_size': ''
+        })
 
     def _send_event(self, reason, id, severity, force=False):
         """
