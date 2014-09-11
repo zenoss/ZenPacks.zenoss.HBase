@@ -8,7 +8,6 @@
 ##############################################################################
 
 
-import os
 import logging
 log = logging.getLogger('zen.HBaseTest')
 
@@ -18,9 +17,7 @@ from Products.ZenTestCase.BaseTestCase import BaseTestCase
 from ZenPacks.zenoss.HBase import NAME_SPLITTER
 from ZenPacks.zenoss.HBase.modeler.plugins.HBaseCollector import \
     HBaseCollector
-from ZenPacks.zenoss.HBase.modeler.plugins.HBaseTableCollector import \
-    HBaseTableCollector
-from ZenPacks.zenoss.HBase.tests.utils import test_device, load_data
+from ZenPacks.zenoss.HBase.tests.utils import load_data
 
 
 class MockJar(object):
@@ -58,16 +55,11 @@ class HBaseModelerPluginsTestCase(BaseTestCase):
         modeler = HBaseCollector()
         modeler_results = dict(
             status=load_data('HBaseCollector.json'),
-            conf=None
+            conf=None,
+            tables=load_data('HBaseTableCollector.json')
         )
 
         for data_map in modeler.process(self.d, modeler_results, log):
-            self.applyDataMap(self.d, data_map)
-
-        tab_modeler = HBaseTableCollector()
-        tab_modeler_results = load_data('HBaseTableCollector.json')
-
-        for data_map in tab_modeler.process(self.d, tab_modeler_results, log):
             self.applyDataMap(self.d, data_map)
 
         self._loaded = True
