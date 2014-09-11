@@ -80,7 +80,7 @@ class HBaseMasterPlugin(HBaseBasePlugin):
         # were added/removed.
         if self.added or self.removed or change:
             ds.id = ds.device
-            result = {'status': res, 'conf': None}
+            result = {'status': res, 'conf': None, 'tables': '{}'}
             return HBaseCollector().process(ds, result, log)
         # If nothing changed, just clear events.
         return [ObjectMap({'getClearEvents': True})]

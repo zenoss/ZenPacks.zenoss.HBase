@@ -144,10 +144,20 @@ class BaseTriggers(object):
 
 class HBaseRegionServerRelationsProvider(BaseRelationsProvider):
     impacted_by_relationships = ['hbase_host']
+    impact_relationships = ['regions']
 
 
 class HBaseHRegionRelationsProvider(BaseRelationsProvider):
     impacted_by_relationships = ['server']
+
+    def getEdges(self):
+        for impact in super(HBaseHRegionRelationsProvider, self).getEdges():
+            yield impact
+        component = self._object
+        # Add impact 'table' relation for region
+        for hbt in component.hbase_tables():
+            if hbt.id == component.table:
+                yield edge(self.guid(), guid(hbt))
 
 
 class HBaseTableRelationsProvider(BaseRelationsProvider):
