@@ -44,6 +44,11 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
     # A variable to store component ids of removed components.
     removed = []
 
+    # Variables for different events for child classes.
+    eventKey = 'hbase_monitoring_error'
+    eventClass = '/Status'
+    port = 'zHBaseRestPort'
+
     def process(self, result):
         """
         Parses resulting data into datapoints.
@@ -106,16 +111,15 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if not res:
                 raise HBaseException('No monitoring data')
         except (Exception, HBaseException), e:
-            # Send connection error event for each component.
-            for ds in config.datasources:
-                e = check_error(e, ds.device) or e
-                results['events'].append({
-                    'component': ds.component,
-                    'summary': str(e),
-                    'eventKey': 'hbase_monitoring_error',
-                    'eventClass': '/Status',
-                    'severity': ZenEventClasses.Error,
-                })
+            # Send connection error event for device.
+            e = check_error(e, ds0.device, self.eventKey, self.port) or e
+            results['events'].append({
+                'component': None,
+                'summary': str(e),
+                'eventKey': self.eventKey,
+                'eventClass': self.eventClass,
+                'severity': ZenEventClasses.Error,
+            })
             defer.returnValue(results)
         # Process returned data.
         for ds in config.datasources:
@@ -125,6 +129,7 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
             if maps:
                 results['maps'].extend(maps)
             results['events'].extend(self.get_events(res, ds))
+        results['values'].setdefault(None)
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -133,14 +138,13 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         and maps.  result - is what returned from collect.
         """
         for component in result['values'].keys():
-            if result['values'][component]:
-                result['events'].append({
-                    'component': component,
-                    'summary': 'Monitoring ok',
-                    'eventKey': 'hbase_monitoring_error',
-                    'eventClass': '/Status',
-                    'severity': ZenEventClasses.Clear,
-                })
+            result['events'].append({
+                'component': component,
+                'summary': 'Monitoring ok',
+                'eventKey': self.eventKey,
+                'eventClass': self.eventClass,
+                'severity': ZenEventClasses.Clear,
+            })
         return result
 
     def onError(self, result, config):
@@ -148,8 +152,8 @@ class HBaseBasePlugin(PythonDataSourcePlugin):
         data['events'].append({
             'component': self.component,
             'summary': str(result),
-            'eventKey': 'hbase_monitoring_error',
-            'eventClass': '/Status',
+            'eventKey': self.eventKey,
+            'eventClass': self.eventClass,
             'severity': ZenEventClasses.Error,
         })
         return data

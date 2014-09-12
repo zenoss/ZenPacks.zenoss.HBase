@@ -40,7 +40,6 @@ class TestHBaseMasterPlugin(BaseTestCase):
         # Check event for added server.
         self.assertIn({
             'eventClass': '/Status',
-            # 'component': 'localhost_44451',
             'severity': 2,
             'summary': "Region server 'localhost:44451' is added"
         }, result)
@@ -126,19 +125,19 @@ class TestHBaseRegionServerPlugin(BaseTestCase):
         result = self.plugin.get_events(data, ds)
         # Check event for dead server.
         self.assertIn({
+            'severity': 4,
             'eventClass': '/Status',
             'component': 'localhost_11111',
-            'eventKey': 'hbase_regionserver_monitoring_error',
-            'severity': 4,
+            'eventKey': 'hbase_monitoring_error',
             'summary': "Region server 'localhost:11111' is dead"
         }, result)
         # Check clear event for dead server.
         self.plugin.component = 'localhost_44451'
         self.assertIn({
+            'severity': 0,
             'eventClass': '/Status',
             'component': 'localhost_44451',
-            'eventKey': 'hbase_regionserver_monitoring_error',
-            'severity': 0,
+            'eventKey': 'hbase_monitoring_error',
             'summary': "Region server 'localhost:44451' is dead"
         }, self.plugin.get_events(data, ds))
 
@@ -196,7 +195,7 @@ class TestHBaseTablePlugin(BaseTestCase):
             'severity': 0,
             'eventClass': '/Status',
             'component': 'test',
-            'eventKey': 'hbase_monitoring_error',
+            'eventKey': 'hbase_table_monitoring_error',
             'summary': 'Monitoring ok'
         }, self.plugin.onSuccess(data, config).get('events'))
 
@@ -208,7 +207,7 @@ class TestHBaseTablePlugin(BaseTestCase):
             'severity': 4,
             'eventClass': '/Status',
             'component': sentinel.component,
-            'eventKey': 'hbase_table_monitoring_error',
+            'eventKey': 'hbase_monitoring_error',
             'summary': "The table 'sentinel.component' is disabled"
         }, result)
 
@@ -220,8 +219,8 @@ class TestHBaseTablePlugin(BaseTestCase):
             'severity': 0,
             'eventClass': '/Status',
             'component': sentinel.component,
-            'eventKey': 'hbase_table_monitoring_error',
-            'summary': "Monitoring ok"
+            'eventKey': 'hbase_monitoring_error',
+            'summary': 'Monitoring ok'
         }, result)
 
     def test_add_maps(self):

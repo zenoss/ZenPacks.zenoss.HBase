@@ -35,6 +35,8 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
     Datasource plugin for HBase Region Server component.
     """
 
+    eventKey = 'hbase_regionserver_monitoring_error'
+
     def process(self, result):
         """
         Parses resulting data into datapoints.
@@ -79,7 +81,7 @@ class HBaseRegionServerPlugin(HBaseBasePlugin):
             'component': self.component,
             'summary': "Region server '{0}' is dead".format(
                 self.component.replace('_', ':')),
-            'eventKey': 'hbase_regionserver_monitoring_error',
+            'eventKey': 'hbase_monitoring_error',
             'eventClass': '/Status',
             'severity': severity
         }]
@@ -123,7 +125,11 @@ class HBaseRegionServerConfPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data')
                 results['maps'].extend(self.add_maps(res, ds))
             except (Exception, HBaseException), e:
-                e = check_error(e, ds.device) or e
+                e = check_error(
+                    e, ds.device,
+                    'hbase_regionserver_monitoring_error',
+                    'zHBaseRegionServerPort'
+                ) or e
                 log.error("No access to page '{}': {}".format(url, e))
         defer.returnValue(results)
 
@@ -167,6 +173,9 @@ class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
         'zHBaseRegionServerPort',
     )
 
+    eventKey = 'hbase_regionserver_monitoring_error'
+    eventClass = '/Net'
+
     @defer.inlineCallbacks
     def collect(self, config):
         """
@@ -192,14 +201,16 @@ class RegionServerStatisticsJMXPlugin(HBaseBasePlugin):
                     raise HBaseException('No monitoring data.')
                 results['values'][ds.component] = self.form_values(res, ds)
             except (Exception, HBaseException), e:
-                e = check_error(e, ds.device) or e
+                e = check_error(
+                    e, ds.device, self.eventKey,
+                    'zHBaseRegionServerPort'
+                ) or e
                 msg = "No access to page '{}': {}".format(url, e)
                 results['events'].append({
                     'component': self.component,
                     'summary': str(e),
-                    'message': msg,
-                    'eventKey': 'hbase_monitoring_error',
-                    'eventClass': '/Status',
+                    'eventKey': self.eventKey,
+                    'eventClass': self.eventClass,
                     'severity': ZenEventClasses.Error,
                 })
                 log.error(msg)

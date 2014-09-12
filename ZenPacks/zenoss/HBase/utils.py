@@ -196,11 +196,25 @@ def dead_node_name(node):
         return node, node
 
 
-def check_error(error, device_id):
+def check_error(error, device_id, eventKey=None, port=None):
     '''
     Check if error is instance of OpenSSL.SSL or Connection Error
     and return instance of error with correct message
     '''
+    prefix = 'The HBase modeling'
+    value = 'value'
+    if port is None:
+        value = 'values'
+        port = 'zHBaseRestPort, zHBaseMasterPort and zHBaseRegionServerPort'
+    if eventKey == 'hbase_monitoring_error':
+        prefix = 'The HBase monitoring'
+    elif eventKey == 'hbase_table_monitoring_error':
+        prefix = 'The HBase Table monitoring'
+    elif eventKey == 'hbase_region_monitoring_error':
+        prefix = 'The HBase Region monitoring'
+    elif eventKey == 'hbase_regionserver_monitoring_error':
+        prefix = 'The HBase Region Server monitoring'
+
     if isinstance(error, SSLError):
         return SSLError(
             'Connection lost for {}. HTTPS was not configured'.format(
@@ -209,9 +223,8 @@ def check_error(error, device_id):
     elif str(error).startswith('404') or str(error).startswith('405') \
             or isinstance(error, ConnectionRefusedError):
         return HBaseException(
-            'The modeling failed due to connection issue. Verify the values of'
-            ' zHBaseRestPort, zHBaseMasterPort'
-            ' and zHBaseRegionServerPort and re-try')
+            '{0} failed due to connection issue. Verify the {1} of'
+            ' {2} and re-try'.format(prefix, value, port))
 
 
 def matcher(res, rule, default=''):
