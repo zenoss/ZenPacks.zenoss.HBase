@@ -25,6 +25,8 @@ class HBaseHRegionPlugin(HBaseBasePlugin):
     Datasource plugin for HBase Region component.
     """
 
+    eventKey = 'hbase_region_monitoring_error'
+
     def process(self, result):
         """
         Parses resulting data into datapoints.

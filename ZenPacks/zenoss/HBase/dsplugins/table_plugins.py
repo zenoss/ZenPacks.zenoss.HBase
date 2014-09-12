@@ -34,6 +34,8 @@ class HBaseTablePlugin(HBaseBasePlugin):
 
     proxy_attributes = HBaseBasePlugin.proxy_attributes + ('zHBaseMasterPort',)
 
+    global_error = None
+
     @defer.inlineCallbacks
     def collect(self, config):
         """
@@ -63,7 +65,9 @@ class HBaseTablePlugin(HBaseBasePlugin):
             )
             try:
                 # Check connection and collect data.
+                port = 'zHBaseMasterPort'
                 res = yield getPage(url, headers=headers)
+                port = 'zHBaseRestPort'
                 schema = yield getPage(schema_url, headers=headers)
                 if not res:
                     raise HBaseException('No monitoring data.')
@@ -71,18 +75,25 @@ class HBaseTablePlugin(HBaseBasePlugin):
                 results['maps'].extend(self.add_maps(res, schema, ds))
                 results['events'].extend(self.get_events(res, ds))
             except (Exception, HBaseException), e:
+                eventKey = 'hbase_table_monitoring_error'
                 if any(code in str(e) for code in ('404', '500')):
                     summary = "The table '{0}' is broken or does not " \
                         "exist".format(ds.component)
+                    component = ds.component
                 else:
-                    summary = str(check_error(e, ds.device) or e)
+                    summary = str(check_error(e, ds.device, eventKey, port) or e)
+                    component = None
+                    self.global_error = True
+
                 results['events'].append({
-                    'component': ds.component,
+                    'component': component,
                     'summary': summary,
-                    'eventKey': 'hbase_monitoring_error',
+                    'eventKey': eventKey,
                     'eventClass': '/Status',
                     'severity': ZenEventClasses.Error,
                 })
+                if self.global_error:
+                    break
         defer.returnValue(results)
 
     def onSuccess(self, result, config):
@@ -92,11 +103,13 @@ class HBaseTablePlugin(HBaseBasePlugin):
         # Clear events for those components, which have maps.
         clear_components = [om.compname.replace('hbase_tables/', '')
                             for om in result['maps']]
+        if not self.global_error:
+            clear_components.append(None)
         for component in clear_components:
             result['events'].append({
                 'component': component,
                 'summary': 'Monitoring ok',
-                'eventKey': 'hbase_monitoring_error',
+                'eventKey': 'hbase_table_monitoring_error',
                 'eventClass': '/Status',
                 'severity': ZenEventClasses.Clear,
             })
@@ -133,7 +146,7 @@ class HBaseTablePlugin(HBaseBasePlugin):
         return [{
             'component': self.component,
             'summary': summary,
-            'eventKey': 'hbase_table_monitoring_error',
+            'eventKey': 'hbase_monitoring_error',
             'eventClass': '/Status',
             'severity': severity,
         }]
