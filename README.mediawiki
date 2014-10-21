@@ -103,6 +103,8 @@ containing one or more of the explicitly mentioned entities.
 * Region servers are affected by hosting Hadoop Data Node failure.
 
 
+{{note}} To add HBase as service to be monitored, add a Dynamic Service Organizer for the service and then add a Dynamic Service to it. Select the new Dynamic Service from the Dynamic Service tree on the left pane and then add the table(s) supporting your HBase service and add them.  The Service Dependency tree will be created automatically for your HBase Service.
+
 == Usage ==
 Use the following steps to start monitoring HBase:
 # Select Infrastructure from the navigation bar.
@@ -123,7 +125,7 @@ servers you want to add. The devices should be added under the target machine de
 
 <syntaxhighlight lang="text">
 /Devices/Server/Linux <HOST NAME or IP>
-zCollectorPlugins=['HBaseCollector', 'HBaseTableCollector'], zHBaseRestPort='8080', zHBaseMasterPort='60010', zHBaseRegionServerPort='60030', zHBasePassword='', zHBaseUsername='', zHBaseScheme='<http(s)>'
+zCollectorPlugins=['HBaseCollector'], zHBaseRestPort='8080', zHBaseMasterPort='60010', zHBaseRegionServerPort='60030', zHBasePassword='', zHBaseUsername='', zHBaseScheme='<http(s)>'
 </syntaxhighlight>
 
 You can then load the HBase monitoring servers into Zenoss Core or Resource Manager as devices with the following command.
