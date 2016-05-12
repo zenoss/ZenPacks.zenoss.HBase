@@ -197,7 +197,7 @@ class HBaseCollector(PythonPlugin):
             'id': node_id + NAME_SPLITTER + prepId(region['name']),
             'title': region['name'].decode('base64'),
             'table': table,
-            'start_key': start_key,
+            'start_key': start_key.encode('string-escape'),
             'region_id': r_id,
             'region_hash': region['name']
         }
